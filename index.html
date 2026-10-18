@@ -2,197 +2,365 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=0.85">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-  body { background-color: #0b0f17; color: #e6edf3; padding: 10px; overflow-x: auto; user-select: none; }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+  body { background-color: #f3f6f8; color: #1c252c; overflow-x: auto; overflow-y: hidden; user-select: none; }
 
-  .top-stats { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #21262d; padding-bottom: 8px; margin-bottom: 10px; }
-  .counter-box { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 4px 12px; font-size: 12px; font-weight: 600; }
+  /* Top Bar */
+  .top-navbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 16px; background: #ffffff; border-bottom: 1px solid #dce2e6;
+  }
+  .brand { font-size: 13px; font-weight: 700; color: #1e293b; letter-spacing: 0.5px; }
+  .stats-counter {
+    display: flex; gap: 14px; font-size: 11px; font-weight: 700;
+    background: #f8fafc; padding: 4px 12px; border-radius: 4px; border: 1px solid #e2e8f0;
+  }
+  .bull-count { color: #059669; }
+  .bear-count { color: #dc2626; }
 
-  #main-viewport { position: relative; width: 1100px; height: 720px; }
-  #flowCanvas { position: absolute; left: 0; top: 0; width: 1100px; height: 720px; pointer-events: none; z-index: 1; }
-  .nodes-layer { position: absolute; left: 0; top: 0; width: 1100px; height: 720px; z-index: 2; pointer-events: auto; }
+  /* Main Visual Grid */
+  #viewport { position: relative; width: 1250px; height: 780px; background: #f3f6f8; margin: 0 auto; }
   
-  .sec-item {
-    position: absolute; width: 140px; height: 32px; background: #161b22; border-radius: 4px;
-    display: flex; justify-content: space-between; align-items: center; padding: 0 10px;
-    font-size: 11px; font-weight: 600; border: 1px solid #30363d;
+  /* Background Canvas */
+  #flowCanvas { position: absolute; left: 0; top: 0; width: 1250px; height: 780px; z-index: 1; pointer-events: none; }
+
+  /* Left Sector List Overlay */
+  .sector-overlay {
+    position: absolute; left: 16px; top: 60px; width: 180px; z-index: 3;
+    display: flex; flex-direction: column; gap: 4px; pointer-events: auto;
   }
-  .bull-sec { border-color: #1b4d3e; }
-  .bear-sec { border-color: #5a1e1e; }
-
-  .stock-card {
-    position: absolute; width: 320px; height: 48px; background: #131920; border-radius: 6px;
-    padding: 6px 12px; cursor: pointer; border: 1.5px solid #10b981; transition: transform 0.1s;
+  .sec-row {
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(255, 255, 255, 0.88); border: 1px solid #d1d5db; border-radius: 3px;
+    padding: 2px 6px; font-size: 10px; font-weight: 600; height: 22px; backdrop-filter: blur(2px);
   }
-  .stock-card.bear { border-color: #ef4444; }
-  .stock-card:active { transform: scale(0.98); }
+  .sec-row .bar-wrap { width: 45px; height: 4px; background: #e2e8f0; border-radius: 2px; overflow: hidden; margin: 0 4px; }
+  .sec-row .bar-fill { height: 100%; border-radius: 2px; }
 
-  .card-row1 { display: flex; justify-content: space-between; font-weight: 700; font-size: 12px; }
-  .card-row2 { display: flex; justify-content: space-between; font-size: 10px; color: #8b949e; margin-top: 2px; }
+  /* Right Scanner Ladder Bracket */
+  .scanner-overlay {
+    position: absolute; right: 16px; top: 30px; width: 340px; height: 720px; z-index: 3; pointer-events: auto;
+  }
+  .stock-pill {
+    position: absolute; right: 0; width: 230px; height: 28px;
+    background: #ffffff; border-left: 3.5px solid #059669; border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06); padding: 3px 8px;
+    display: flex; justify-content: space-between; align-items: center; font-size: 10.5px;
+    cursor: pointer; transition: 0.15s;
+  }
+  .stock-pill:hover { transform: translateX(-3px); box-shadow: 0 3px 8px rgba(0,0,0,0.12); }
+  .stock-pill.bear { border-left-color: #dc2626; }
 
-  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 999; justify-content: center; align-items: center; }
-  .modal-window { background: #161b22; border: 1px solid #30363d; border-radius: 8px; width: 440px; padding: 16px; }
-  .close-x { float: right; background: none; border: none; color: #8b949e; font-size: 20px; cursor: pointer; }
-  .ob-highlight { background: rgba(16, 185, 129, 0.15); border: 1px dashed #10b981; border-radius: 4px; padding: 10px; margin: 12px 0; font-size: 12px; }
-  .grid-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; font-size: 11px; background: #0d1117; padding: 8px; border-radius: 4px; }
+  /* Modal Details */
+  .modal-backdrop {
+    display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6);
+    z-index: 999; justify-content: center; align-items: center; backdrop-filter: blur(3px);
+  }
+  .modal-card {
+    background: #ffffff; border-radius: 8px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+    width: 420px; padding: 18px; border: 1px solid #cbd5e1;
+  }
+  .close-btn { float: right; font-size: 18px; border: none; background: none; cursor: pointer; color: #64748b; }
+  .ob-alert {
+    background: #ecfdf5; border: 1px dashed #059669; border-radius: 4px;
+    padding: 8px; font-size: 11px; color: #065f46; margin: 12px 0;
+  }
+  .metrics-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+    background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px; border-radius: 4px; font-size: 10.5px;
+  }
 </style>
 </head>
 <body>
 
-<div class="top-stats">
-  <div style="font-size: 13px; font-weight: 700; letter-spacing: 0.5px;">ORDERBLOCK LIQUIDITY FLOW</div>
-  <div class="counter-box">
-    BULLISH <span style="color:#10b981;">172</span> &nbsp;|&nbsp; BEARISH <span style="color:#ef4444;">41</span>
+<div class="top-navbar">
+  <div class="brand">ORDER BLOCK • LIQUIDITY ARCHITECTURE</div>
+  <div class="stats-counter">
+    <div>BULLISH <span class="bull-count">172</span></div>
+    <div>BEARISH <span class="bear-count">41</span></div>
   </div>
 </div>
 
-<div id="main-viewport">
-  <canvas id="flowCanvas" width="1100" height="720"></canvas>
-  <div class="nodes-layer" id="nodesContainer"></div>
+<div id="viewport">
+  <canvas id="flowCanvas" width="1250" height="780"></canvas>
+  <div class="sector-overlay" id="sectorContainer"></div>
+  <div class="scanner-overlay" id="stockContainer"></div>
 </div>
 
-<div class="modal-overlay" id="info-modal">
-  <div class="modal-window">
-    <button class="close-x" onclick="closePopup()">✕</button>
-    <div style="font-size:16px; font-weight:bold;" id="popStock">STOCK</div>
-    <div style="font-size:11px; color:#8b949e; margin-bottom:8px;" id="popSector">SECTOR</div>
-    <div style="font-size:22px; font-weight:bold;" id="popPrice">₹0.00</div>
-    <div style="font-size:12px; margin-bottom:10px;" id="popPct">+0.00%</div>
-    <div class="ob-highlight">
-      <strong>🎯 ORDER BLOCK DETECTED:</strong> <span id="popZone">10:00 AM Open Range</span><br>
-      Liquidity Sweep: <span style="color:#10b981; font-weight:bold;">Long Build-Up Confirmed</span>
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal-card">
+    <button class="close-btn" onclick="closeModal()">✕</button>
+    <div style="font-size: 15px; font-weight: 700; color:#0f172a;" id="mStock">STOCK</div>
+    <div style="font-size: 11px; color: #64748b; margin-bottom: 6px;" id="mSector">SECTOR</div>
+    <div style="font-size: 22px; font-weight: 800; color:#059669;" id="mPrice">₹0.00</div>
+    <div style="font-size: 11px; font-weight: 700;" id="mPct">+0.00%</div>
+    
+    <div class="ob-alert">
+      <strong>🎯 ORDER BLOCK DETECTED:</strong> <span id="mZone">09:45 AM Pullback Block</span><br>
+      Status: <span style="font-weight: 700;">Institutional Accumulation</span>
     </div>
-    <div class="grid-metrics">
-      <div>VWAP: <b style="color:white;" id="popVwap">0.00</b></div>
-      <div>OI SURGE: <b style="color:#10b981;">+13.4%</b></div>
-      <div>CONV: <b style="color:white;">98/100</b></div>
-      <div>SUPPORT: <b style="color:white;" id="popSup">0.00</b></div>
-      <div>RESIST: <b style="color:white;" id="popRes">0.00</b></div>
-      <div>BIAS: <b style="color:#10b981;">BULLISH</b></div>
+
+    <div class="metrics-grid">
+      <div>VWAP: <b id="mVwap" style="color:#0f172a;">0.00</b></div>
+      <div>CONV: <b style="color:#059669;">98/100</b></div>
+      <div>OI SURGE: <b style="color:#059669;">+18.4%</b></div>
+      <div>SUP 1: <b id="mSup">0.00</b></div>
+      <div>RES 1: <b id="mRes">0.00</b></div>
+      <div>BIAS: <b style="color:#059669;">BULLISH</b></div>
     </div>
   </div>
 </div>
 
 <script>
-var sectors = [
-  { name: "AUTO", pct: "+2.87%", type: "bull", y: 20 },
-  { name: "LOGISTICS", pct: "+2.41%", type: "bull", y: 58 },
-  { name: "CEMENT", pct: "+2.22%", type: "bull", y: 96 },
-  { name: "FINANCE", pct: "+1.95%", type: "bull", y: 134 },
-  { name: "NBFC", pct: "+1.38%", type: "bull", y: 172 },
-  { name: "IT", pct: "+1.14%", type: "bull", y: 210 },
-  { name: "INFRA", pct: "+0.85%", type: "bull", y: 248 },
-  { name: "PHARMA", pct: "+0.45%", type: "bull", y: 286 },
-  { name: "CHEMICAL", pct: "+0.12%", type: "bull", y: 324 },
-  { name: "REALTY", pct: "-0.34%", type: "bear", y: 460 },
-  { name: "FMCG", pct: "-0.78%", type: "bear", y: 500 },
-  { name: "MEDIA", pct: "-1.10%", type: "bear", y: 540 },
-  { name: "OIL & GAS", pct: "-1.45%", type: "bear", y: 580 },
-  { name: "CONSUMER", pct: "-1.82%", type: "bear", y: 620 },
-  { name: "ENERGY", pct: "-2.30%", type: "bear", y: 660 }
+// 1. Data Definitions
+const sectors = [
+  { name: "IT", pct: "+2.87%", type: "bull", val: 85 },
+  { name: "LOGISTICS", pct: "+2.41%", type: "bull", val: 80 },
+  { name: "CEMENT", pct: "+2.21%", type: "bull", val: 76 },
+  { name: "FMCG", pct: "+1.97%", type: "bull", val: 70 },
+  { name: "NBFC", pct: "+1.88%", type: "bull", val: 68 },
+  { name: "INSURANCE", pct: "+1.69%", type: "bull", val: 62 },
+  { name: "METAL", pct: "+1.67%", type: "bull", val: 60 },
+  { name: "POWER", pct: "+1.65%", type: "bull", val: 59 },
+  { name: "PSU BANK", pct: "+1.59%", type: "bull", val: 56 },
+  { name: "BANK", pct: "+1.38%", type: "bull", val: 50 },
+  { name: "PHARMA", pct: "+1.34%", type: "bull", val: 48 },
+  { name: "NEW-AGE", pct: "+1.31%", type: "bull", val: 45 },
+  { name: "CHEM", pct: "+1.26%", type: "bull", val: 42 },
+  { name: "TELECOM", pct: "+1.21%", type: "bull", val: 40 },
+  { name: "REALTY", pct: "+1.17%", type: "bull", val: 38 },
+  { name: "DEFENCE", pct: "+1.16%", type: "bull", val: 37 },
+  { name: "AUTO", pct: "+1.15%", type: "bull", val: 36 },
+  { name: "CAP GOODS", pct: "+0.77%", type: "bull", val: 28 },
+  { name: "CONSUMER", pct: "+0.71%", type: "bull", val: 24 },
+  { name: "CAP MKTS", pct: "+0.52%", type: "bull", val: 18 },
+  { name: "OIL & GAS", pct: "+0.01%", type: "bull", val: 8 },
+  { name: "MEDIA", pct: "-0.64%", type: "bear", val: 25 },
+  { name: "ENERGY", pct: "-1.12%", type: "bear", val: 40 }
 ];
 
-var cards = [
-  { name: "EICHERMOT", sec: "AUTO", pct: "+4.17%", price: "7,058.00", vwap: "7,015.20", sup: "7,001.00", res: "7,088.00", type: "bull", y: 20 },
-  { name: "TVSMOTOR", sec: "AUTO", pct: "+2.48%", price: "2,480.00", vwap: "2,460.00", sup: "2,450.00", res: "2,510.00", type: "bull", y: 74 },
-  { name: "INOXWIND", sec: "ENERGY", pct: "+6.76%", price: "142.10", vwap: "136.50", sup: "138.00", res: "146.00", type: "bull", y: 128 },
-  { name: "TCS", sec: "IT", pct: "+3.92%", price: "4,120.00", vwap: "4,070.00", sup: "4,050.00", res: "4,160.00", type: "bull", y: 182 },
-  { name: "AUROPHARMA", sec: "PHARMA", pct: "+2.85%", price: "1,245.00", vwap: "1,228.00", sup: "1,220.00", res: "1,260.00", type: "bull", y: 236 },
-  { name: "FEDERALBNK", sec: "FINANCE", pct: "+2.11%", price: "192.50", vwap: "189.20", sup: "188.00", res: "195.00", type: "bull", y: 290 },
-  { name: "TATAMOTORS", sec: "AUTO", pct: "+1.95%", price: "965.00", vwap: "958.00", sup: "950.00", res: "978.00", type: "bull", y: 344 },
-  { name: "ANANDRATHI", sec: "FINANCE", pct: "-4.68%", price: "2,038.20", vwap: "2,090.00", sup: "2,010.00", res: "2,080.00", type: "bear", y: 530 },
-  { name: "MPHASIS", sec: "IT", pct: "-2.14%", price: "2,610.00", vwap: "2,650.00", sup: "2,580.00", res: "2,640.00", type: "bear", y: 584 },
-  { name: "COFORGE", sec: "IT", pct: "-1.85%", price: "7,450.00", vwap: "7,520.00", sup: "7,380.00", res: "7,510.00", type: "bear", y: 638 }
+const topStocks = [
+  { name: "EICHERMOT", sec: "AUTO", pct: "+4.17%", price: "7,058.00", vwap: "7,015.20", sup: "7,001.00", res: "7,088.00", type: "bull", y: 35 },
+  { name: "TVSMOTOR", sec: "AUTO", pct: "+2.48%", price: "2,480.00", vwap: "2,460.00", sup: "2,450.00", res: "2,510.00", type: "bull", y: 75 },
+  { name: "INOXWIND", sec: "ENERGY", pct: "+6.76%", price: "142.10", vwap: "136.50", sup: "138.00", res: "146.00", type: "bull", y: 115 },
+  { name: "TCS", sec: "IT", pct: "+3.92%", price: "4,120.00", vwap: "4,070.00", sup: "4,050.00", res: "4,160.00", type: "bull", y: 155 },
+  { name: "AUROPHARMA", sec: "PHARMA", pct: "+2.85%", price: "1,245.00", vwap: "1,228.00", sup: "1,220.00", res: "1,260.00", type: "bull", y: 195 },
+  { name: "FEDERALBNK", sec: "FINANCE", pct: "+2.11%", price: "192.50", vwap: "189.20", sup: "188.00", res: "195.00", type: "bull", y: 235 },
+  { name: "TATAMOTORS", sec: "AUTO", pct: "+1.95%", price: "965.00", vwap: "958.00", sup: "950.00", res: "978.00", type: "bull", y: 275 },
+  // Bearish Compressed Bottom Stocks
+  { name: "ANANDRATHI", sec: "FINANCE", pct: "-4.68%", price: "2,038.20", vwap: "2,090.00", sup: "2,010.00", res: "2,080.00", type: "bear", y: 560 },
+  { name: "MPHASIS", sec: "IT", pct: "-2.14%", price: "2,610.00", vwap: "2,650.00", sup: "2,580.00", res: "2,640.00", type: "bear", y: 600 },
+  { name: "COFORGE", sec: "IT", pct: "-1.85%", price: "7,450.00", vwap: "7,520.00", sup: "7,380.00", res: "7,510.00", type: "bear", y: 640 }
 ];
 
-var container = document.getElementById("nodesContainer");
+// 2. Render Sector Items (Left)
+const secContainer = document.getElementById("sectorContainer");
+sectors.forEach(s => {
+  const div = document.createElement("div");
+  div.className = "sec-row";
+  const color = s.type === "bull" ? "#059669" : "#dc2626";
+  div.innerHTML = `
+    <span style="color:#334155;">${s.name}</span>
+    <div class="bar-wrap">
+      <div class="bar-fill" style="width:${s.val}%; background:${color};"></div>
+    </div>
+    <span style="color:${color};">${s.pct}</span>
+  `;
+  secContainer.appendChild(div);
+});
 
-for (var i = 0; i < sectors.length; i++) {
-  var s = sectors[i];
-  var el = document.createElement("div");
-  el.className = "sec-item " + (s.type === 'bull' ? 'bull-sec' : 'bear-sec');
-  el.style.left = "15px";
-  el.style.top = s.y + "px";
-  el.innerHTML = "<span>" + s.name + "</span><span style='color:" + (s.type === 'bull' ? '#10b981' : '#ef4444') + "'>" + s.pct + "</span>";
-  container.appendChild(el);
-}
+// 3. Render Top Stock Cards (Right)
+const stockContainer = document.getElementById("stockContainer");
+topStocks.forEach(stk => {
+  const card = document.createElement("div");
+  card.className = "stock-pill " + stk.type;
+  card.style.top = stk.y + "px";
+  card.onclick = () => openModal(stk);
+  const color = stk.type === "bull" ? "#059669" : "#dc2626";
+  card.innerHTML = `
+    <div>
+      <div style="font-weight:700; color:#0f172a;">${stk.name}</div>
+      <div style="font-size:9.5px; color:#64748b;">₹${stk.price} • ${stk.sec}</div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-weight:700; color:${color};">${stk.pct}</div>
+      <div style="font-size:8.5px; color:${color}; font-weight:600;">${stk.type === 'bull' ? 'BUY BLOCK' : 'SELL BLOCK'}</div>
+    </div>
+  `;
+  stockContainer.appendChild(card);
+});
 
-for (var j = 0; j < cards.length; j++) {
-  (function(c) {
-    var el = document.createElement("div");
-    el.className = "stock-card " + c.type;
-    el.style.left = "740px";
-    el.style.top = c.y + "px";
-    el.onclick = function() { showPopup(c); };
-    el.innerHTML = '<div class="card-row1"><span>' + c.name + '</span><span style="color:' + (c.type === 'bull' ? '#10b981' : '#ef4444') + '">' + c.pct + '</span></div>' +
-                   '<div class="card-row2"><span>₹' + c.price + ' • ' + c.sec + '</span><span style="color:' + (c.type === 'bull' ? '#10b981' : '#ef4444') + '">' + (c.type === 'bull' ? 'LONG BUILD-UP' : 'SHORT BUILD-UP') + '</span></div>';
-    container.appendChild(el);
-  })(cards[j]);
-}
+// 4. Canvas Visual Engine (Massive Flow Lines + Ladder + Top Scatter)
+const canvas = document.getElementById("flowCanvas");
+const ctx = canvas.getContext("2d");
 
-var canvas = document.getElementById("flowCanvas");
-var ctx = canvas.getContext("2d");
-var ladderX = 460;
-var inTracks = [];
-var outTracks = [];
+const ladderX = 860;
+const inTracks = [];
 
-// Inflow: Bullish heavy UPWARD bend towards top zone (Y: 20 to 360)
-for (var i = 0; i < sectors.length; i++) {
-  var s = sectors[i];
-  if (s.type === "bull") {
-    for (var k = 0; k < 15; k++) {
-      var targetY = 20 + Math.random() * 340;
-      inTracks.push({
-        p0: [155, s.y + 16],
-        p1: [270, s.y + 16],
-        p2: [370, targetY],
-        p3: [ladderX, targetY],
-        type: "bull"
-      });
-    }
+// Generate 180+ steep upward curved lines (Waterfall Flow)
+for (let i = 0; i < 200; i++) {
+  const isBull = i < 172; // 85% Bullish dominance matching original ratio
+  if (isBull) {
+    // Starts low from sector height and curves steeply UPWARDS to the top scanner ladder
+    const startY = 70 + Math.random() * 630;
+    const targetY = 30 + Math.pow(Math.random(), 1.5) * 360; // Concentrated on top bracket
+    inTracks.push({
+      p0: [200, startY],
+      p1: [320 + Math.random() * 80, startY + (targetY - startY) * 0.1],
+      p2: [520 + Math.random() * 100, targetY + 15],
+      p3: [ladderX, targetY],
+      type: "bull",
+      width: Math.random() * 0.6 + 0.5
+    });
   } else {
-    for (var k = 0; k < 4; k++) {
-      var targetY = 530 + Math.random() * 150;
-      inTracks.push({
-        p0: [155, s.y + 16],
-        p1: [270, s.y + 16],
-        p2: [370, targetY],
-        p3: [ladderX, targetY],
-        type: "bear"
-      });
-    }
-  }
-}
-
-// Outflow: Concentrated lines into top stock cards
-for (var i = 0; i < cards.length; i++) {
-  var c = cards[i];
-  var count = c.type === "bull" ? 3 : 2;
-  for (var k = 0; k < count; k++) {
-    var srcY = c.type === "bull" ? 25 + Math.random() * 340 : 535 + Math.random() * 140;
-    outTracks.push({
-      p0: [ladderX + 48, srcY],
-      p1: [560, srcY],
-      p2: [670, c.y + 24],
-      p3: [740, c.y + 24],
-      type: c.type
+    // Small bottom compressed bearish flow
+    const startY = 560 + Math.random() * 150;
+    const targetY = 570 + Math.random() * 140;
+    inTracks.push({
+      p0: [200, startY],
+      p1: [380, startY],
+      p2: [600, targetY],
+      p3: [ladderX, targetY],
+      type: "bear",
+      width: 0.5
     });
   }
 }
 
-var inPulses = [];
-for (var i = 0; i < inTracks.length; i++) {
-  inPulses.push({ trackIndex: i, t: Math.random(), speed: 0.0035 + Math.random() * 0.002, len: 0.14 });
-}
-
-var outPulses = [];
-for (var i = 0; i < outTracks.length; i++) {
-  outPulses.push({ trackIndex: i, t: Math.random(), speed: 0.003 + Math.random() * 0.002, len: 0.16 });
-}
+// Particle pulses
+const pulses = inTracks.map((tr, idx) => ({
+  trackIndex: idx,
+  t: Math.random(),
+  speed: 0.003 + Math.random() * 0.0025,
+  len: 0.12 + Math.random() * 0.08
+}));
 
 function getPoint(p0, p1, p2, p3, t) {
-  var u = 1 - t;
-  var tt = t * t;
-  var uu = u * u;
+  const u = 1 - t;
+  const tt = t * t;
+  const uu = u * u;
+  const uuu = uu * u;
+  const ttt = tt * t;
+  return [
+    uuu * p0[0] + 3 * uu * t * p1[0] + 3 * u * tt * p2[0] + ttt * p3[0],
+    uuu * p0[1] + 3 * uu * t * p1[1] + 3 * u * tt * p2[1] + ttt * p3[1]
+  ];
+}
+
+// Generate Top Scatter Dots (Market Breadth Bar at very top)
+const topDots = [];
+for (let i = 0; i < 90; i++) {
+  topDots.push({
+    x: 420 + Math.random() * 440,
+    y: 18 + (Math.random() * 16 - 8),
+    type: Math.random() > 0.25 ? "bull" : "bear"
+  });
+}
+
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // A. Top Scatter Breadth Meter (Original photo feature)
+  ctx.fillStyle = "rgba(203, 213, 225, 0.4)";
+  ctx.fillRect(400, 16, 470, 2);
+  topDots.forEach(d => {
+    ctx.beginPath();
+    ctx.arc(d.x, d.y + (d.type === 'bull' ? -3 : 5), 1.8, 0, Math.PI * 2);
+    ctx.fillStyle = d.type === 'bull' ? "rgba(5, 150, 105, 0.7)" : "rgba(220, 38, 38, 0.7)";
+    ctx.fill();
+  });
+
+  // B. Horizontal Blue Reference Guidelines
+  const blueLevels = [120, 280, 480, 640];
+  blueLevels.forEach(lvl => {
+    ctx.beginPath();
+    ctx.moveTo(200, lvl);
+    ctx.lineTo(ladderX + 28, lvl);
+    ctx.strokeStyle = "rgba(59, 130, 246, 0.45)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+
+  // C. Base Curves (Subtle 0.2 Green/Red Waterfall Web)
+  inTracks.forEach(tr => {
+    ctx.beginPath();
+    ctx.moveTo(tr.p0[0], tr.p0[1]);
+    ctx.bezierCurveTo(tr.p1[0], tr.p1[1], tr.p2[0], tr.p2[1], tr.p3[0], tr.p3[1]);
+    ctx.strokeStyle = tr.type === "bull" ? "rgba(5, 150, 105, 0.22)" : "rgba(220, 38, 38, 0.20)";
+    ctx.lineWidth = tr.width;
+    ctx.stroke();
+  });
+
+  // D. Dynamic Fluid Comet Pulses
+  pulses.forEach(pt => {
+    pt.t += pt.speed;
+    if (pt.t > 1) pt.t = 0;
+
+    const tr = inTracks[pt.trackIndex];
+    const head = getPoint(tr.p0, tr.p1, tr.p2, tr.p3, pt.t);
+    const tail = getPoint(tr.p0, tr.p1, tr.p2, tr.p3, Math.max(0, pt.t - pt.len));
+
+    const grad = ctx.createLinearGradient(tail[0], tail[1], head[0], head[1]);
+    if (tr.type === "bull") {
+      grad.addColorStop(0, "rgba(5, 150, 105, 0)");
+      grad.addColorStop(1, "rgba(16, 185, 129, 0.95)");
+    } else {
+      grad.addColorStop(0, "rgba(220, 38, 38, 0)");
+      grad.addColorStop(1, "rgba(239, 68, 68, 0.95)");
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(tail[0], tail[1]);
+    ctx.lineTo(head[0], head[1]);
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = tr.width + 0.6;
+    ctx.stroke();
+  });
+
+  // E. Dense Ladder Ticks (Original Central Strip)
+  for (let i = 0; i < 90; i++) {
+    const isBull = i < 68;
+    const y = 30 + i * 7.5;
+    ctx.beginPath();
+    ctx.moveTo(ladderX, y);
+    ctx.lineTo(ladderX + 24 + (Math.sin(i) * 12), y);
+    ctx.strokeStyle = isBull ? "rgba(5, 150, 105, 0.6)" : "rgba(220, 38, 38, 0.5)";
+    ctx.lineWidth = 1.3;
+    ctx.stroke();
+  }
+
+  // Bracket Highlighter around Top 20 Stocks
+  ctx.strokeStyle = "#059669";
+  ctx.lineWidth = 1.8;
+  ctx.strokeRect(ladderX + 42, 28, 6, 320);
+
+  ctx.strokeStyle = "#dc2626";
+  ctx.lineWidth = 1.8;
+  ctx.strokeRect(ladderX + 42, 550, 6, 160);
+
+  requestAnimationFrame(render);
+}
+
+requestAnimationFrame(render);
+
+// Modal Helpers
+function openModal(stk) {
+  document.getElementById("mStock").innerText = stk.name;
+  document.getElementById("mSector").innerText = stk.sec + " SECTOR";
+  document.getElementById("mPrice").innerText = "₹" + stk.price;
+  const p = document.getElementById("mPct");
+  p.innerText = stk.pct;
+  p.style.color = stk.type === "bull" ? "#059669" : "#dc2626";
+  document.getElementById("mVwap").innerText = stk.vwap;
+  document.getElementById("mSup").innerText = stk.sup;
+  document.getElementById("mRes").innerText = stk.res;
+  document.getElementById("modalBackdrop").style.display = "flex";
+}
+function closeModal() {
+  document.getElementById("modalBackdrop").style.display = "none";
+}
+</script>
+</body>
+</html>
