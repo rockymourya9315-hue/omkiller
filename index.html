@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
-  body { background-color: #f3f6f8; color: #1c252c; overflow-x: auto; overflow-y: hidden; user-select: none; }
+  body { background-color: #f3f6f8; color: #1c252c; overflow: auto; user-select: none; touch-action: none; }
 
-  /* Top Bar */
   .top-navbar {
+    position: sticky; top: 0; z-index: 100;
     display: flex; justify-content: space-between; align-items: center;
     padding: 8px 16px; background: #ffffff; border-bottom: 1px solid #dce2e6;
   }
@@ -20,31 +20,49 @@
   .bull-count { color: #059669; }
   .bear-count { color: #dc2626; }
 
-  /* Main Visual Grid */
-  #viewport { position: relative; width: 1250px; height: 780px; background: #f3f6f8; margin: 0 auto; }
-  
-  /* Background Canvas */
-  #flowCanvas { position: absolute; left: 0; top: 0; width: 1250px; height: 780px; z-index: 1; pointer-events: none; }
+  /* Zoom Controller HUD */
+  .zoom-controls {
+    position: fixed; bottom: 20px; right: 20px; z-index: 900;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .zoom-btn {
+    width: 38px; height: 38px; border-radius: 50%; background: #ffffff;
+    border: 1px solid #cbd5e1; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    font-size: 18px; font-weight: bold; color: #1e293b; display: flex;
+    align-items: center; justify-content: center; cursor: pointer;
+  }
+  .zoom-btn:active { background: #e2e8f0; }
 
-  /* Left Sector List Overlay */
+  /* Zoomable Pan Canvas Container */
+  #pan-wrapper {
+    position: relative; width: 100vw; height: calc(100vh - 45px);
+    overflow: hidden; touch-action: none;
+  }
+  #zoom-layer {
+    position: absolute; left: 0; top: 0; width: 1300px; height: 780px;
+    transform-origin: 0 0; will-change: transform;
+  }
+
+  #viewport { position: relative; width: 1300px; height: 780px; background: #f3f6f8; }
+  #flowCanvas { position: absolute; left: 0; top: 0; width: 1300px; height: 780px; z-index: 1; pointer-events: none; }
+
   .sector-overlay {
     position: absolute; left: 16px; top: 60px; width: 180px; z-index: 3;
     display: flex; flex-direction: column; gap: 4px; pointer-events: auto;
   }
   .sec-row {
     display: flex; justify-content: space-between; align-items: center;
-    background: rgba(255, 255, 255, 0.88); border: 1px solid #d1d5db; border-radius: 3px;
+    background: rgba(255, 255, 255, 0.9); border: 1px solid #d1d5db; border-radius: 3px;
     padding: 2px 6px; font-size: 10px; font-weight: 600; height: 22px; backdrop-filter: blur(2px);
   }
   .sec-row .bar-wrap { width: 45px; height: 4px; background: #e2e8f0; border-radius: 2px; overflow: hidden; margin: 0 4px; }
   .sec-row .bar-fill { height: 100%; border-radius: 2px; }
 
-  /* Right Scanner Ladder Bracket */
   .scanner-overlay {
-    position: absolute; right: 16px; top: 30px; width: 340px; height: 720px; z-index: 3; pointer-events: auto;
+    position: absolute; right: 16px; top: 30px; width: 260px; height: 720px; z-index: 3; pointer-events: auto;
   }
   .stock-pill {
-    position: absolute; right: 0; width: 230px; height: 28px;
+    position: absolute; right: 0; width: 220px; height: 28px;
     background: #ffffff; border-left: 3.5px solid #059669; border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.06); padding: 3px 8px;
     display: flex; justify-content: space-between; align-items: center; font-size: 10.5px;
@@ -83,10 +101,20 @@
   </div>
 </div>
 
-<div id="viewport">
-  <canvas id="flowCanvas" width="1250" height="780"></canvas>
-  <div class="sector-overlay" id="sectorContainer"></div>
-  <div class="scanner-overlay" id="stockContainer"></div>
+<div class="zoom-controls">
+  <div class="zoom-btn" onclick="applyZoom(0.25)">+</div>
+  <div class="zoom-btn" onclick="applyZoom(-0.25)">−</div>
+  <div class="zoom-btn" style="font-size:12px;" onclick="resetZoom()">1:1</div>
+</div>
+
+<div id="pan-wrapper">
+  <div id="zoom-layer">
+    <div id="viewport">
+      <canvas id="flowCanvas" width="1300" height="780"></canvas>
+      <div class="sector-overlay" id="sectorContainer"></div>
+      <div class="scanner-overlay" id="stockContainer"></div>
+    </div>
+  </div>
 </div>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -114,7 +142,83 @@
 </div>
 
 <script>
-// 1. Data Definitions
+// --- PINCH TO ZOOM & PAN ENGINE ---
+let scale = 0.85;
+let panX = 0;
+let panY = 0;
+let isPanning = false;
+let startX = 0;
+let startY = 0;
+let initialDistance = 0;
+let initialScale = 0.85;
+
+const zoomLayer = document.getElementById("zoom-layer");
+const panWrapper = document.getElementById("pan-wrapper");
+
+function updateTransform() {
+  scale = Math.min(Math.max(0.4, scale), 3.0);
+  zoomLayer.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+}
+updateTransform();
+
+function applyZoom(delta) {
+  scale += delta;
+  updateTransform();
+}
+
+function resetZoom() {
+  scale = 0.85;
+  panX = 0;
+  panY = 0;
+  updateTransform();
+}
+
+// Touch Handling for Mobile Pinch & Drag
+panWrapper.addEventListener('touchstart', (e) => {
+  if (e.touches.length === 1) {
+    isPanning = true;
+    startX = e.touches[0].clientX - panX;
+    startY = e.touches[0].clientY - panY;
+  } else if (e.touches.length === 2) {
+    isPanning = false;
+    initialDistance = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+    initialScale = scale;
+  }
+}, { passive: false });
+
+panWrapper.addEventListener('touchmove', (e) => {
+  if (e.touches.length === 1 && isPanning) {
+    panX = e.touches[0].clientX - startX;
+    panY = e.touches[0].clientY - startY;
+    updateTransform();
+  } else if (e.touches.length === 2) {
+    const dist = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+    if (initialDistance > 0) {
+      scale = initialScale * (dist / initialDistance);
+      updateTransform();
+    }
+  }
+}, { passive: false });
+
+panWrapper.addEventListener('touchend', () => {
+  isPanning = false;
+  initialDistance = 0;
+});
+
+// Desktop Mouse Wheel & Drag
+panWrapper.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  scale += e.deltaY * -0.001;
+  updateTransform();
+}, { passive: false });
+
+// --- DATA & RENDER ---
 const sectors = [
   { name: "IT", pct: "+2.87%", type: "bull", val: 85 },
   { name: "LOGISTICS", pct: "+2.41%", type: "bull", val: 80 },
@@ -149,13 +253,11 @@ const topStocks = [
   { name: "AUROPHARMA", sec: "PHARMA", pct: "+2.85%", price: "1,245.00", vwap: "1,228.00", sup: "1,220.00", res: "1,260.00", type: "bull", y: 195 },
   { name: "FEDERALBNK", sec: "FINANCE", pct: "+2.11%", price: "192.50", vwap: "189.20", sup: "188.00", res: "195.00", type: "bull", y: 235 },
   { name: "TATAMOTORS", sec: "AUTO", pct: "+1.95%", price: "965.00", vwap: "958.00", sup: "950.00", res: "978.00", type: "bull", y: 275 },
-  // Bearish Compressed Bottom Stocks
   { name: "ANANDRATHI", sec: "FINANCE", pct: "-4.68%", price: "2,038.20", vwap: "2,090.00", sup: "2,010.00", res: "2,080.00", type: "bear", y: 560 },
   { name: "MPHASIS", sec: "IT", pct: "-2.14%", price: "2,610.00", vwap: "2,650.00", sup: "2,580.00", res: "2,640.00", type: "bear", y: 600 },
   { name: "COFORGE", sec: "IT", pct: "-1.85%", price: "7,450.00", vwap: "7,520.00", sup: "7,380.00", res: "7,510.00", type: "bear", y: 640 }
 ];
 
-// 2. Render Sector Items (Left)
 const secContainer = document.getElementById("sectorContainer");
 sectors.forEach(s => {
   const div = document.createElement("div");
@@ -171,7 +273,6 @@ sectors.forEach(s => {
   secContainer.appendChild(div);
 });
 
-// 3. Render Top Stock Cards (Right)
 const stockContainer = document.getElementById("stockContainer");
 topStocks.forEach(stk => {
   const card = document.createElement("div");
@@ -192,36 +293,37 @@ topStocks.forEach(stk => {
   stockContainer.appendChild(card);
 });
 
-// 4. Canvas Visual Engine (Massive Flow Lines + Ladder + Top Scatter)
 const canvas = document.getElementById("flowCanvas");
 const ctx = canvas.getContext("2d");
 
-const ladderX = 860;
-const inTracks = [];
+const ladderX = 820;
+const boxWidth = 150;
+const boxRight = ladderX + boxWidth;
+const cardTargetX = 1060;
 
-// Generate 180+ steep upward curved lines (Waterfall Flow)
+const inTracks = [];
+const outTracks = [];
+
 for (let i = 0; i < 200; i++) {
-  const isBull = i < 172; // 85% Bullish dominance matching original ratio
+  const isBull = i < 172;
   if (isBull) {
-    // Starts low from sector height and curves steeply UPWARDS to the top scanner ladder
     const startY = 70 + Math.random() * 630;
-    const targetY = 30 + Math.pow(Math.random(), 1.5) * 360; // Concentrated on top bracket
+    const targetY = 32 + Math.pow(Math.random(), 1.5) * 350;
     inTracks.push({
       p0: [200, startY],
       p1: [320 + Math.random() * 80, startY + (targetY - startY) * 0.1],
-      p2: [520 + Math.random() * 100, targetY + 15],
+      p2: [540 + Math.random() * 100, targetY + 15],
       p3: [ladderX, targetY],
       type: "bull",
-      width: Math.random() * 0.6 + 0.5
+      width: Math.random() * 0.5 + 0.5
     });
   } else {
-    // Small bottom compressed bearish flow
     const startY = 560 + Math.random() * 150;
-    const targetY = 570 + Math.random() * 140;
+    const targetY = 560 + Math.random() * 150;
     inTracks.push({
       p0: [200, startY],
       p1: [380, startY],
-      p2: [600, targetY],
+      p2: [620, targetY],
       p3: [ladderX, targetY],
       type: "bear",
       width: 0.5
@@ -229,12 +331,34 @@ for (let i = 0; i < 200; i++) {
   }
 }
 
-// Particle pulses
-const pulses = inTracks.map((tr, idx) => ({
+topStocks.forEach(stk => {
+  const count = stk.type === "bull" ? 3 : 2;
+  for (let k = 0; k < count; k++) {
+    const srcY = stk.type === "bull" ? (35 + Math.random() * 320) : (555 + Math.random() * 120);
+    const destY = stk.y + 14;
+    outTracks.push({
+      p0: [boxRight, srcY],
+      p1: [boxRight + 35, srcY],
+      p2: [cardTargetX - 30, destY],
+      p3: [cardTargetX, destY],
+      type: stk.type,
+      width: 0.8
+    });
+  }
+});
+
+const inPulses = inTracks.map((tr, idx) => ({
   trackIndex: idx,
   t: Math.random(),
   speed: 0.003 + Math.random() * 0.0025,
   len: 0.12 + Math.random() * 0.08
+}));
+
+const outPulses = outTracks.map((tr, idx) => ({
+  trackIndex: idx,
+  t: Math.random(),
+  speed: 0.0035 + Math.random() * 0.002,
+  len: 0.18 + Math.random() * 0.06
 }));
 
 function getPoint(p0, p1, p2, p3, t) {
@@ -249,7 +373,6 @@ function getPoint(p0, p1, p2, p3, t) {
   ];
 }
 
-// Generate Top Scatter Dots (Market Breadth Bar at very top)
 const topDots = [];
 for (let i = 0; i < 90; i++) {
   topDots.push({
@@ -262,7 +385,6 @@ for (let i = 0; i < 90; i++) {
 function render() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // A. Top Scatter Breadth Meter (Original photo feature)
   ctx.fillStyle = "rgba(203, 213, 225, 0.4)";
   ctx.fillRect(400, 16, 470, 2);
   topDots.forEach(d => {
@@ -272,18 +394,16 @@ function render() {
     ctx.fill();
   });
 
-  // B. Horizontal Blue Reference Guidelines
   const blueLevels = [120, 280, 480, 640];
   blueLevels.forEach(lvl => {
     ctx.beginPath();
     ctx.moveTo(200, lvl);
-    ctx.lineTo(ladderX + 28, lvl);
-    ctx.strokeStyle = "rgba(59, 130, 246, 0.45)";
+    ctx.lineTo(ladderX + boxWidth, lvl);
+    ctx.strokeStyle = "rgba(59, 130, 246, 0.35)";
     ctx.lineWidth = 1;
     ctx.stroke();
   });
 
-  // C. Base Curves (Subtle 0.2 Green/Red Waterfall Web)
   inTracks.forEach(tr => {
     ctx.beginPath();
     ctx.moveTo(tr.p0[0], tr.p0[1]);
@@ -293,8 +413,16 @@ function render() {
     ctx.stroke();
   });
 
-  // D. Dynamic Fluid Comet Pulses
-  pulses.forEach(pt => {
+  outTracks.forEach(tr => {
+    ctx.beginPath();
+    ctx.moveTo(tr.p0[0], tr.p0[1]);
+    ctx.bezierCurveTo(tr.p1[0], tr.p1[1], tr.p2[0], tr.p2[1], tr.p3[0], tr.p3[1]);
+    ctx.strokeStyle = tr.type === "bull" ? "rgba(5, 150, 105, 0.35)" : "rgba(220, 38, 38, 0.32)";
+    ctx.lineWidth = tr.width;
+    ctx.stroke();
+  });
+
+  inPulses.forEach(pt => {
     pt.t += pt.speed;
     if (pt.t > 1) pt.t = 0;
 
@@ -303,13 +431,8 @@ function render() {
     const tail = getPoint(tr.p0, tr.p1, tr.p2, tr.p3, Math.max(0, pt.t - pt.len));
 
     const grad = ctx.createLinearGradient(tail[0], tail[1], head[0], head[1]);
-    if (tr.type === "bull") {
-      grad.addColorStop(0, "rgba(5, 150, 105, 0)");
-      grad.addColorStop(1, "rgba(16, 185, 129, 0.95)");
-    } else {
-      grad.addColorStop(0, "rgba(220, 38, 38, 0)");
-      grad.addColorStop(1, "rgba(239, 68, 68, 0.95)");
-    }
+    grad.addColorStop(0, tr.type === "bull" ? "rgba(5, 150, 105, 0)" : "rgba(220, 38, 38, 0)");
+    grad.addColorStop(1, tr.type === "bull" ? "rgba(16, 185, 129, 0.95)" : "rgba(239, 68, 68, 0.95)");
 
     ctx.beginPath();
     ctx.moveTo(tail[0], tail[1]);
@@ -319,33 +442,86 @@ function render() {
     ctx.stroke();
   });
 
-  // E. Dense Ladder Ticks (Original Central Strip)
+  outPulses.forEach(pt => {
+    pt.t += pt.speed;
+    if (pt.t > 1) pt.t = 0;
+
+    const tr = outTracks[pt.trackIndex];
+    const head = getPoint(tr.p0, tr.p1, tr.p2, tr.p3, pt.t);
+    const tail = getPoint(tr.p0, tr.p1, tr.p2, tr.p3, Math.max(0, pt.t - pt.len));
+
+    const grad = ctx.createLinearGradient(tail[0], tail[1], head[0], head[1]);
+    grad.addColorStop(0, tr.type === "bull" ? "rgba(5, 150, 105, 0)" : "rgba(220, 38, 38, 0)");
+    grad.addColorStop(1, tr.type === "bull" ? "rgba(5, 150, 105, 1)" : "rgba(220, 38, 38, 1)");
+
+    ctx.beginPath();
+    ctx.moveTo(tail[0], tail[1]);
+    ctx.lineTo(head[0], head[1]);
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 1.3;
+    ctx.stroke();
+  });
+
   for (let i = 0; i < 90; i++) {
     const isBull = i < 68;
     const y = 30 + i * 7.5;
+    const tickLen = 60 + Math.sin(i * 1.5) * 50;
     ctx.beginPath();
     ctx.moveTo(ladderX, y);
-    ctx.lineTo(ladderX + 24 + (Math.sin(i) * 12), y);
-    ctx.strokeStyle = isBull ? "rgba(5, 150, 105, 0.6)" : "rgba(220, 38, 38, 0.5)";
-    ctx.lineWidth = 1.3;
+    ctx.lineTo(ladderX + tickLen, y);
+    ctx.strokeStyle = isBull ? "rgba(5, 150, 105, 0.45)" : "rgba(220, 38, 38, 0.40)";
+    ctx.lineWidth = 1.2;
     ctx.stroke();
   }
 
-  // Bracket Highlighter around Top 20 Stocks
+  const boxTop = 28;
+  const boxHeight = 340;
+  
+  ctx.fillStyle = "rgba(5, 150, 105, 0.08)";
+  ctx.fillRect(ladderX, boxTop, boxWidth, boxHeight);
   ctx.strokeStyle = "#059669";
   ctx.lineWidth = 1.8;
-  ctx.strokeRect(ladderX + 42, 28, 6, 320);
+  ctx.strokeRect(ladderX, boxTop, boxWidth, boxHeight);
+
+  const arm = 14;
+  ctx.lineWidth = 3.5;
+  ctx.strokeStyle = "#059669";
+  
+  ctx.beginPath();
+  ctx.moveTo(ladderX - 2, boxTop + arm);
+  ctx.lineTo(ladderX - 2, boxTop - 2);
+  ctx.lineTo(ladderX + arm, boxTop - 2);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(boxRight + 2 - arm, boxTop - 2);
+  ctx.lineTo(boxRight + 2, boxTop - 2);
+  ctx.lineTo(boxRight + 2, boxTop + arm);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(ladderX - 2, boxTop + boxHeight - arm);
+  ctx.lineTo(ladderX - 2, boxTop + boxHeight + 2);
+  ctx.lineTo(ladderX + arm, boxTop + boxHeight + 2);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(boxRight + 2 - arm, boxTop + boxHeight + 2);
+  ctx.lineTo(boxRight + 2, boxTop + boxHeight + 2);
+  ctx.lineTo(boxRight + 2, boxTop + boxHeight - arm);
+  ctx.stroke();
 
   ctx.strokeStyle = "#dc2626";
   ctx.lineWidth = 1.8;
-  ctx.strokeRect(ladderX + 42, 550, 6, 160);
+  ctx.fillStyle = "rgba(220, 38, 38, 0.06)";
+  ctx.fillRect(ladderX, 550, boxWidth, 160);
+  ctx.strokeRect(ladderX, 550, boxWidth, 160);
 
   requestAnimationFrame(render);
 }
 
 requestAnimationFrame(render);
 
-// Modal Helpers
 function openModal(stk) {
   document.getElementById("mStock").innerText = stk.name;
   document.getElementById("mSector").innerText = stk.sec + " SECTOR";
