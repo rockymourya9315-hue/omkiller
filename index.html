@@ -11,18 +11,47 @@
   .counter-box { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 4px 12px; font-size: 12px; font-weight: 600; }
   #main-viewport { position: relative; width: 1100px; height: 680px; }
   svg { width: 100%; height: 100%; }
-  .flow-curve { fill: none; opacity: 0.28; transition: opacity 0.2s, stroke-width 0.2s; }
-  .flow-curve:hover { opacity: 0.95; stroke-width: 2.2px !important; }
-  .ladder-tick { stroke-width: 1.5; opacity: 0.5; }
+
+  /* --- LIVE FLOW ANIMATION ENGINE --- */
+  @keyframes flowDashGreen {
+    from { stroke-dashoffset: 40; }
+    to { stroke-dashoffset: 0; }
+  }
+  @keyframes flowDashRed {
+    from { stroke-dashoffset: 40; }
+    to { stroke-dashoffset: 0; }
+  }
+
+  .flow-curve {
+    fill: none;
+    stroke-dasharray: 6, 4;
+    animation: flowDashGreen 1.2s linear infinite;
+    opacity: 0.55;
+    transition: opacity 0.2s, stroke-width 0.2s;
+  }
+  .flow-curve.bear {
+    animation: flowDashRed 1.2s linear infinite;
+  }
+  .flow-curve:hover {
+    opacity: 1 !important;
+    stroke-width: 3px !important;
+  }
+
+  /* Ladder Ticks & Brackets */
+  .ladder-tick { stroke-width: 1.5; opacity: 0.6; }
   .ladder-bracket { stroke: #388bfd; stroke-width: 2; fill: none; opacity: 0.8; }
+  
+  /* Nodes & Cards */
   .sec-box { rx: 4px; ry: 4px; fill: #161b22; stroke: #30363d; }
   .sec-label { font-size: 11px; fill: #c9d1d9; font-weight: 600; pointer-events: none; }
   .sec-pct { font-size: 10px; font-weight: bold; pointer-events: none; }
-  .card-box { rx: 5px; ry: 5px; cursor: pointer; transition: 0.15s; }
-  .card-box:hover { filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.4)); }
+  .card-box { rx: 5px; ry: 5px; cursor: pointer; transition: 0.2s; }
+  .card-box:hover { filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.5)); transform: scale(1.01); }
   .card-title { font-size: 12px; font-weight: 700; fill: #ffffff; pointer-events: none; }
   .card-sub { font-size: 10px; fill: #8b949e; pointer-events: none; }
   .card-tag { font-size: 9px; font-weight: 700; pointer-events: none; }
+
+  /* Modal Popup */
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 999; justify-content: center; align-items: center; }
   .modal-window { background: #161b22; border: 1px solid #30363d; border-radius: 8px; width: 440px; padding: 16px; }
   .close-x { float: right; background: none; border: none; color: #8b949e; font-size: 20px; cursor: pointer; }
@@ -91,11 +120,16 @@ const cards = [
   { id: 8, name: "COFORGE", sec: "IT", pct: "-1.85%", price: "7,450.00", vwap: "7,520.00", sup: "7,380.00", res: "7,510.00", type: "bear", y: 536 },
   { id: 9, name: "ITC", sec: "FMCG", pct: "-1.25%", price: "488.00", vwap: "494.00", sup: "484.00", res: "492.00", type: "bear", y: 594 }
 ];
+
 const svg = d3.select("#chart-svg");
+
+// Draw Sectors
 const secGroup = svg.selectAll(".sec-g").data(sectors).enter().append("g").attr("transform", d => `translate(15, ${d.y})`);
 secGroup.append("rect").attr("width", 140).attr("height", 32).attr("class", "sec-box").attr("stroke", d => d.type === "bull" ? "#1b4d3e" : "#5a1e1e");
 secGroup.append("text").attr("x", 10).attr("y", 20).attr("class", "sec-label").text(d => d.name);
 secGroup.append("text").attr("x", 130).attr("y", 20).attr("text-anchor", "end").attr("class", "sec-pct").attr("fill", d => d.type === "bull" ? "#10b981" : "#ef4444").text(d => d.pct);
+
+// Middle Ladder
 const ladderX = 460;
 const ladderTicks = [];
 for (let i = 0; i < 70; i++) {
@@ -105,22 +139,34 @@ for (let i = 0; i < 70; i++) {
 svg.selectAll(".ladder-tick").data(ladderTicks).enter().append("line").attr("class", "ladder-tick").attr("x1", ladderX).attr("y1", d => d.y).attr("x2", d => ladderX + d.len).attr("y2", d => d.y).attr("stroke", d => d.type === "bull" ? "#10b981" : "#ef4444");
 svg.append("path").attr("class", "ladder-bracket").attr("d", `M ${ladderX + 44},20 L ${ladderX + 48},20 L ${ladderX + 48},360 L ${ladderX + 44},360`);
 svg.append("path").attr("class", "ladder-bracket").attr("stroke", "#ef4444").attr("d", `M ${ladderX + 44},420 L ${ladderX + 48},420 L ${ladderX + 48},650 L ${ladderX + 44},650`);
+
+// Animated Flow Curves
 const denseLinks = [];
 sectors.forEach(s => {
-  const count = s.type === "bull" ? 4 : 3;
+  const count = s.type === "bull" ? 5 : 4;
   for (let k = 0; k < count; k++) {
     const targetY = s.type === "bull" ? 20 + Math.random() * 340 : 420 + Math.random() * 230;
-    denseLinks.push({ x1: 155, y1: s.y + 16, x2: ladderX, y2: targetY, type: s.type, width: Math.random() * 1.2 + 0.8 });
+    denseLinks.push({ x1: 155, y1: s.y + 16, x2: ladderX, y2: targetY, type: s.type, width: Math.random() * 1.4 + 0.8 });
   }
 });
 cards.forEach(c => {
-  for (let k = 0; k < 3; k++) {
+  for (let k = 0; k < 4; k++) {
     const srcY = c.type === "bull" ? 25 + Math.random() * 320 : 425 + Math.random() * 210;
-    denseLinks.push({ x1: ladderX + 48, y1: srcY, x2: 740, y2: c.y + 24, type: c.type, width: Math.random() * 1.5 + 1.0 });
+    denseLinks.push({ x1: ladderX + 48, y1: srcY, x2: 740, y2: c.y + 24, type: c.type, width: Math.random() * 1.6 + 1.0 });
   }
 });
+
 const bezier = d3.linkHorizontal().x(d => d[0]).y(d => d[1]);
-svg.selectAll(".flow-curve").data(denseLinks).enter().append("path").attr("class", "flow-curve").attr("d", d => bezier({ source: [d.x1, d.y1], target: [d.x2, d.y2] })).attr("stroke", d => d.type === "bull" ? "#10b981" : "#ef4444").attr("stroke-width", d => d.width);
+svg.selectAll(".flow-curve")
+  .data(denseLinks)
+  .enter()
+  .append("path")
+  .attr("class", d => `flow-curve ${d.type}`)
+  .attr("d", d => bezier({ source: [d.x1, d.y1], target: [d.x2, d.y2] }))
+  .attr("stroke", d => d.type === "bull" ? "#10b981" : "#ef4444")
+  .attr("stroke-width", d => d.width);
+
+// Stock Cards
 const cardGroup = svg.selectAll(".card-g").data(cards).enter().append("g").attr("transform", d => `translate(740, ${d.y})`).on("click", (e, d) => showPopup(d));
 cardGroup.append("rect").attr("width", 320).attr("height", 48).attr("class", "card-box").attr("fill", "#131920").attr("stroke", d => d.type === "bull" ? "#10b981" : "#ef4444").attr("stroke-width", 1.5);
 cardGroup.append("rect").attr("x", 12).attr("y", 38).attr("width", 80).attr("height", 3).attr("fill", d => d.type === "bull" ? "#10b981" : "#ef4444").attr("opacity", 0.8);
@@ -128,6 +174,7 @@ cardGroup.append("text").attr("x", 12).attr("y", 20).attr("class", "card-title")
 cardGroup.append("text").attr("x", 12).attr("y", 33).attr("class", "card-sub").text(d => "₹" + d.price + " • " + d.sec);
 cardGroup.append("text").attr("x", 308).attr("y", 20).attr("text-anchor", "end").attr("class", "card-title").attr("fill", d => d.type === "bull" ? "#10b981" : "#ef4444").text(d => d.pct);
 cardGroup.append("text").attr("x", 308).attr("y", 34).attr("text-anchor", "end").attr("class", "card-tag").attr("fill", d => d.type === "bull" ? "#10b981" : "#ef4444").text(d => d.type === "bull" ? "LONG BUILD-UP" : "SHORT BUILD-UP");
+
 function showPopup(d) {
   document.getElementById("popStock").innerText = d.name;
   document.getElementById("popSector").innerText = d.sec + " SECTOR";
