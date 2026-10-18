@@ -6,52 +6,57 @@
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-  body { background-color: #0d1117; color: #e6edf3; padding: 10px; overflow-x: auto; user-select: none; }
+  body { background-color: #0b0f17; color: #e6edf3; padding: 10px; overflow-x: auto; user-select: none; }
+
   .top-stats { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #21262d; padding-bottom: 8px; margin-bottom: 10px; }
   .counter-box { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 4px 12px; font-size: 12px; font-weight: 600; }
+
   #main-viewport { position: relative; width: 1100px; height: 680px; }
   svg { width: 100%; height: 100%; }
 
-  /* --- LIVE FLOW ANIMATION ENGINE --- */
-  @keyframes flowDashGreen {
-    from { stroke-dashoffset: 40; }
-    to { stroke-dashoffset: 0; }
-  }
-  @keyframes flowDashRed {
-    from { stroke-dashoffset: 40; }
-    to { stroke-dashoffset: 0; }
-  }
-
-  .flow-curve {
+  /* 60FPS Hardware Accelerated Fluid Glow Lines */
+  .base-curve {
     fill: none;
-    stroke-dasharray: 6, 4;
-    animation: flowDashGreen 1.2s linear infinite;
-    opacity: 0.55;
-    transition: opacity 0.2s, stroke-width 0.2s;
-  }
-  .flow-curve.bear {
-    animation: flowDashRed 1.2s linear infinite;
-  }
-  .flow-curve:hover {
-    opacity: 1 !important;
-    stroke-width: 3px !important;
+    opacity: 0.18;
+    stroke-linecap: round;
   }
 
-  /* Ladder Ticks & Brackets */
-  .ladder-tick { stroke-width: 1.5; opacity: 0.6; }
+  .pulse-curve {
+    fill: none;
+    stroke-linecap: round;
+    opacity: 0.85;
+    filter: drop-shadow(0 0 3px currentColor);
+    stroke-dasharray: 60, 240;
+    animation: smoothFluid 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    will-change: stroke-dashoffset;
+  }
+
+  @keyframes smoothFluid {
+    0% {
+      stroke-dashoffset: 300;
+    }
+    100% {
+      stroke-dashoffset: -300;
+    }
+  }
+
+  /* Ladder & Brackets */
+  .ladder-tick { stroke-width: 1.5; opacity: 0.5; }
   .ladder-bracket { stroke: #388bfd; stroke-width: 2; fill: none; opacity: 0.8; }
-  
-  /* Nodes & Cards */
+
+  /* Nodes */
   .sec-box { rx: 4px; ry: 4px; fill: #161b22; stroke: #30363d; }
   .sec-label { font-size: 11px; fill: #c9d1d9; font-weight: 600; pointer-events: none; }
   .sec-pct { font-size: 10px; font-weight: bold; pointer-events: none; }
-  .card-box { rx: 5px; ry: 5px; cursor: pointer; transition: 0.2s; }
+
+  /* Cards */
+  .card-box { rx: 5px; ry: 5px; cursor: pointer; transition: 0.15s; }
   .card-box:hover { filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.5)); transform: scale(1.01); }
   .card-title { font-size: 12px; font-weight: 700; fill: #ffffff; pointer-events: none; }
   .card-sub { font-size: 10px; fill: #8b949e; pointer-events: none; }
   .card-tag { font-size: 9px; font-weight: 700; pointer-events: none; }
 
-  /* Modal Popup */
+  /* Modal */
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 999; justify-content: center; align-items: center; }
   .modal-window { background: #161b22; border: 1px solid #30363d; border-radius: 8px; width: 440px; padding: 16px; }
   .close-x { float: right; background: none; border: none; color: #8b949e; font-size: 20px; cursor: pointer; }
@@ -60,15 +65,18 @@
 </style>
 </head>
 <body>
+
 <div class="top-stats">
   <div style="font-size: 13px; font-weight: 700; letter-spacing: 0.5px;">ORDERBLOCK LIQUIDITY FLOW</div>
   <div class="counter-box">
     BULLISH <span style="color:#10b981;">172</span> &nbsp;|&nbsp; BEARISH <span style="color:#ef4444;">41</span>
   </div>
 </div>
+
 <div id="main-viewport">
   <svg id="chart-svg"></svg>
 </div>
+
 <div class="modal-overlay" id="info-modal">
   <div class="modal-window">
     <button class="close-x" onclick="closePopup()">✕</button>
@@ -90,6 +98,7 @@
     </div>
   </div>
 </div>
+
 <script>
 const sectors = [
   { id: 0, name: "AUTO", pct: "+2.87%", type: "bull", y: 20 },
@@ -108,6 +117,7 @@ const sectors = [
   { id: 13, name: "CONSUMER", pct: "-1.82%", type: "bear", y: 578 },
   { id: 14, name: "ENERGY", pct: "-2.30%", type: "bear", y: 620 }
 ];
+
 const cards = [
   { id: 0, name: "EICHERMOT", sec: "AUTO", pct: "+4.17%", price: "7,058.00", vwap: "7,015.20", sup: "7,001.00", res: "7,088.00", type: "bull", y: 20 },
   { id: 1, name: "TVSMOTOR", sec: "AUTO", pct: "+2.48%", price: "2,480.00", vwap: "2,460.00", sup: "2,450.00", res: "2,510.00", type: "bull", y: 78 },
@@ -140,31 +150,57 @@ svg.selectAll(".ladder-tick").data(ladderTicks).enter().append("line").attr("cla
 svg.append("path").attr("class", "ladder-bracket").attr("d", `M ${ladderX + 44},20 L ${ladderX + 48},20 L ${ladderX + 48},360 L ${ladderX + 44},360`);
 svg.append("path").attr("class", "ladder-bracket").attr("stroke", "#ef4444").attr("d", `M ${ladderX + 44},420 L ${ladderX + 48},420 L ${ladderX + 48},650 L ${ladderX + 44},650`);
 
-// Animated Flow Curves
+// Links Data
 const denseLinks = [];
 sectors.forEach(s => {
   const count = s.type === "bull" ? 5 : 4;
   for (let k = 0; k < count; k++) {
     const targetY = s.type === "bull" ? 20 + Math.random() * 340 : 420 + Math.random() * 230;
-    denseLinks.push({ x1: 155, y1: s.y + 16, x2: ladderX, y2: targetY, type: s.type, width: Math.random() * 1.4 + 0.8 });
+    denseLinks.push({ 
+      x1: 155, y1: s.y + 16, 
+      x2: ladderX, y2: targetY, 
+      type: s.type, 
+      width: Math.random() * 1.4 + 1.0,
+      delay: (Math.random() * 1.8).toFixed(2)
+    });
   }
 });
+
 cards.forEach(c => {
   for (let k = 0; k < 4; k++) {
     const srcY = c.type === "bull" ? 25 + Math.random() * 320 : 425 + Math.random() * 210;
-    denseLinks.push({ x1: ladderX + 48, y1: srcY, x2: 740, y2: c.y + 24, type: c.type, width: Math.random() * 1.6 + 1.0 });
+    denseLinks.push({ 
+      x1: ladderX + 48, y1: srcY, 
+      x2: 740, y2: c.y + 24, 
+      type: c.type, 
+      width: Math.random() * 1.6 + 1.2,
+      delay: (Math.random() * 1.8).toFixed(2)
+    });
   }
 });
 
 const bezier = d3.linkHorizontal().x(d => d[0]).y(d => d[1]);
-svg.selectAll(".flow-curve")
+
+// 1. Static base track lines (smooth dark guide)
+svg.selectAll(".base-curve")
   .data(denseLinks)
   .enter()
   .append("path")
-  .attr("class", d => `flow-curve ${d.type}`)
+  .attr("class", "base-curve")
   .attr("d", d => bezier({ source: [d.x1, d.y1], target: [d.x2, d.y2] }))
   .attr("stroke", d => d.type === "bull" ? "#10b981" : "#ef4444")
   .attr("stroke-width", d => d.width);
+
+// 2. High-speed fluid pulse wave (glow running without dash flickering)
+svg.selectAll(".pulse-curve")
+  .data(denseLinks)
+  .enter()
+  .append("path")
+  .attr("class", "pulse-curve")
+  .attr("d", d => bezier({ source: [d.x1, d.y1], target: [d.x2, d.y2] }))
+  .attr("stroke", d => d.type === "bull" ? "#34d399" : "#f87171")
+  .attr("stroke-width", d => d.width + 0.4)
+  .style("animation-delay", d => `${d.delay}s`);
 
 // Stock Cards
 const cardGroup = svg.selectAll(".card-g").data(cards).enter().append("g").attr("transform", d => `translate(740, ${d.y})`).on("click", (e, d) => showPopup(d));
