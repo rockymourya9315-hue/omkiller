@@ -140,42 +140,59 @@ cards.forEach(c => {
 const canvas = document.getElementById("flowCanvas");
 const ctx = canvas.getContext("2d");
 const ladderX = 460;
-const tracks = [];
+const inTracks = [];   // Heavy flow: Sector -> Ladder (160+ tracks)
+const outTracks = [];  // Filtered flow: Ladder -> Cards (Only 20 selected tracks)
 
+// 1. DENSE INFLOW: Har sector se 12–14 lines nikal kar ladder me ghusengi (Scanning Web)
 sectors.forEach(s => {
-  const count = s.type === "bull" ? 5 : 4;
+  const count = s.type === "bull" ? 14 : 11;
   for (let i = 0; i < count; i++) {
-    const targetY = s.type === "bull" ? 20 + Math.random() * 340 : 420 + Math.random() * 230;
-    tracks.push({
+    const targetY = s.type === "bull" 
+      ? 20 + Math.random() * 340 
+      : 420 + Math.random() * 230;
+    inTracks.push({
       p0: [155, s.y + 16],
-      p1: [ladderX * 0.45, s.y + 16],
-      p2: [ladderX * 0.75, targetY],
+      p1: [155 + (ladderX - 155) * 0.45, s.y + 16],
+      p2: [155 + (ladderX - 155) * 0.75, targetY],
       p3: [ladderX, targetY],
       type: s.type,
-      width: Math.random() * 0.8 + 1.2
+      width: Math.random() * 0.5 + 0.7
     });
   }
 });
 
+// 2. FILTERED OUTFLOW: Scanner bracket se filter hoke sirf har card tak 2–3 specific lines niklengi
 cards.forEach(c => {
-  for (let i = 0; i < 4; i++) {
-    const srcY = c.type === "bull" ? 25 + Math.random() * 320 : 425 + Math.random() * 210;
-    tracks.push({
+  const lineCount = 2; // Sirf filtered lines jo right tak pahunchegi
+  for (let i = 0; i < lineCount; i++) {
+    const srcY = c.type === "bull" 
+      ? 30 + Math.random() * 310 
+      : 430 + Math.random() * 200;
+    outTracks.push({
       p0: [ladderX + 48, srcY],
       p1: [ladderX + 110, srcY],
       p2: [680, c.y + 24],
       p3: [740, c.y + 24],
       type: c.type,
-      width: Math.random() * 0.8 + 1.2
+      width: Math.random() * 0.6 + 1.2
     });
   }
 });
 
-const pulses = tracks.map((tr, idx) => ({
+// Pulses for Inflow (Fast & Dense Web)
+const inPulses = inTracks.map((tr, idx) => ({
   trackIndex: idx,
   t: Math.random(),
-  speed: 0.0035 + Math.random() * 0.0025,
-  len: 0.16 + Math.random() * 0.08
+  speed: 0.004 + Math.random() * 0.003,
+  len: 0.12 + Math.random() * 0.08
+}));
+
+// Pulses for Outflow (Smooth High-Glow Filtered Results)
+const outPulses = outTracks.map((tr, idx) => ({
+  trackIndex: idx,
+  t: Math.random(),
+  speed: 0.0035 + Math.random() * 0.002,
+  len: 0.18 + Math.random() * 0.06
 }));
 
 function getBezierPoint(p0, p1, p2, p3, t) {
@@ -195,54 +212,87 @@ function getBezierPoint(p0, p1, p2, p3, t) {
 function render() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // 1. Draw Visible Base Curved Tracks (Poori saaf dikhne wali lines)
-  tracks.forEach(tr => {
+  // A. DRAW HEAVY DENSE WEB ON LEFT (Sectors -> Scanner)
+  inTracks.forEach(tr => {
     ctx.beginPath();
     ctx.moveTo(tr.p0[0], tr.p0[1]);
     ctx.bezierCurveTo(tr.p1[0], tr.p1[1], tr.p2[0], tr.p2[1], tr.p3[0], tr.p3[1]);
-    ctx.strokeStyle = tr.type === "bull" ? "rgba(16, 185, 129, 0.42)" : "rgba(239, 68, 68, 0.42)";
+    ctx.strokeStyle = tr.type === "bull" ? "rgba(16, 185, 129, 0.32)" : "rgba(239, 68, 68, 0.32)";
     ctx.lineWidth = tr.width;
     ctx.stroke();
   });
 
-  // 2. Draw Ladder Ticks
+  // B. DRAW FILTERED SPARSER LINES ON RIGHT (Scanner -> Stock Cards)
+  outTracks.forEach(tr => {
+    ctx.beginPath();
+    ctx.moveTo(tr.p0[0], tr.p0[1]);
+    ctx.bezierCurveTo(tr.p1[0], tr.p1[1], tr.p2[0], tr.p2[1], tr.p3[0], tr.p3[1]);
+    ctx.strokeStyle = tr.type === "bull" ? "rgba(16, 185, 129, 0.55)" : "rgba(239, 68, 68, 0.55)";
+    ctx.lineWidth = tr.width;
+    ctx.stroke();
+  });
+
+  // C. DRAW MIDDLE SCANNER FILTER LADDER
   for (let i = 0; i < 70; i++) {
     const isBull = i < 48;
     const y = 20 + i * 9;
     ctx.beginPath();
     ctx.moveTo(ladderX, y);
-    ctx.lineTo(ladderX + 24, y);
-    ctx.strokeStyle = isBull ? "rgba(16, 185, 129, 0.55)" : "rgba(239, 68, 68, 0.55)";
-    ctx.lineWidth = 1.5;
+    ctx.lineTo(ladderX + 28, y);
+    ctx.strokeStyle = isBull ? "rgba(16, 185, 129, 0.65)" : "rgba(239, 68, 68, 0.65)";
+    ctx.lineWidth = 1.6;
     ctx.stroke();
   }
 
-  // Bracket Guides
-  ctx.strokeStyle = "rgba(56, 139, 253, 0.85)";
+  // Scanner Funnel Filter Box Frames
+  ctx.strokeStyle = "rgba(56, 139, 253, 0.9)";
   ctx.lineWidth = 2;
   ctx.strokeRect(ladderX + 44, 20, 4, 340);
-  ctx.strokeStyle = "rgba(239, 68, 68, 0.85)";
+  ctx.strokeStyle = "rgba(239, 68, 68, 0.9)";
   ctx.strokeRect(ladderX + 44, 420, 4, 230);
 
-  // 3. Draw Moving Comet Glow Waves (Smooth Liquid Flow)
-  pulses.forEach(pt => {
+  // D. FLOW PULSES (Inflow Dense Stream)
+  inPulses.forEach(pt => {
     pt.t += pt.speed;
     if (pt.t > 1) pt.t = 0;
 
-    const tr = tracks[pt.trackIndex];
-    const headT = pt.t;
-    const tailT = Math.max(0, pt.t - pt.len);
-
-    const head = getBezierPoint(tr.p0, tr.p1, tr.p2, tr.p3, headT);
-    const tail = getBezierPoint(tr.p0, tr.p1, tr.p2, tr.p3, tailT);
+    const tr = inTracks[pt.trackIndex];
+    const head = getBezierPoint(tr.p0, tr.p1, tr.p2, tr.p3, pt.t);
+    const tail = getBezierPoint(tr.p0, tr.p1, tr.p2, tr.p3, Math.max(0, pt.t - pt.len));
 
     const grad = ctx.createLinearGradient(tail[0], tail[1], head[0], head[1]);
     if (tr.type === "bull") {
       grad.addColorStop(0, "rgba(16, 185, 129, 0)");
-      grad.addColorStop(1, "rgba(167, 243, 208, 1)");
+      grad.addColorStop(1, "rgba(167, 243, 208, 0.9)");
     } else {
       grad.addColorStop(0, "rgba(239, 68, 68, 0)");
-      grad.addColorStop(1, "rgba(254, 202, 202, 1)");
+      grad.addColorStop(1, "rgba(254, 202, 202, 0.9)");
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(tail[0], tail[1]);
+    ctx.lineTo(head[0], head[1]);
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = tr.width + 0.8;
+    ctx.stroke();
+  });
+
+  // E. FLOW PULSES (Outflow Filtered Stream to Cards)
+  outPulses.forEach(pt => {
+    pt.t += pt.speed;
+    if (pt.t > 1) pt.t = 0;
+
+    const tr = outTracks[pt.trackIndex];
+    const head = getBezierPoint(tr.p0, tr.p1, tr.p2, tr.p3, pt.t);
+    const tail = getBezierPoint(tr.p0, tr.p1, tr.p2, tr.p3, Math.max(0, pt.t - pt.len));
+
+    const grad = ctx.createLinearGradient(tail[0], tail[1], head[0], head[1]);
+    if (tr.type === "bull") {
+      grad.addColorStop(0, "rgba(16, 185, 129, 0)");
+      grad.addColorStop(1, "rgba(52, 211, 153, 1)");
+    } else {
+      grad.addColorStop(0, "rgba(239, 68, 68, 0)");
+      grad.addColorStop(1, "rgba(248, 113, 113, 1)");
     }
 
     ctx.beginPath();
@@ -250,7 +300,6 @@ function render() {
     ctx.lineTo(head[0], head[1]);
     ctx.strokeStyle = grad;
     ctx.lineWidth = tr.width + 1.2;
-    ctx.lineCap = "round";
     ctx.stroke();
   });
 
