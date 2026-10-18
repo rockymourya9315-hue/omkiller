@@ -10,9 +10,9 @@
   .top-stats { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #21262d; padding-bottom: 8px; margin-bottom: 10px; }
   .counter-box { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 4px 12px; font-size: 12px; font-weight: 600; }
 
-  #main-viewport { position: relative; width: 1100px; height: 680px; }
-  #flowCanvas { position: absolute; left: 0; top: 0; width: 1100px; height: 680px; pointer-events: none; z-index: 1; }
-  .nodes-layer { position: absolute; left: 0; top: 0; width: 1100px; height: 680px; z-index: 2; pointer-events: auto; }
+  #main-viewport { position: relative; width: 1100px; height: 720px; }
+  #flowCanvas { position: absolute; left: 0; top: 0; width: 1100px; height: 720px; pointer-events: none; z-index: 1; }
+  .nodes-layer { position: absolute; left: 0; top: 0; width: 1100px; height: 720px; z-index: 2; pointer-events: auto; }
   
   .sec-item {
     position: absolute; width: 140px; height: 32px; background: #161b22; border-radius: 4px;
@@ -49,7 +49,7 @@
 </div>
 
 <div id="main-viewport">
-  <canvas id="flowCanvas" width="1100" height="680"></canvas>
+  <canvas id="flowCanvas" width="1100" height="720"></canvas>
   <div class="nodes-layer" id="nodesContainer"></div>
 </div>
 
@@ -66,7 +66,7 @@
     </div>
     <div class="grid-metrics">
       <div>VWAP: <b style="color:white;" id="popVwap">0.00</b></div>
-      <div>OI SURGE: <b style="color:#10b981;" id="popOi">+13.4%</b></div>
+      <div>OI SURGE: <b style="color:#10b981;">+13.4%</b></div>
       <div>CONV: <b style="color:white;">98/100</b></div>
       <div>SUPPORT: <b style="color:white;" id="popSup">0.00</b></div>
       <div>RESIST: <b style="color:white;" id="popRes">0.00</b></div>
@@ -76,247 +76,23 @@
 </div>
 
 <script>
+// Left Sectors
 const sectors = [
   { name: "AUTO", pct: "+2.87%", type: "bull", y: 20 },
-  { name: "LOGISTICS", pct: "+2.41%", type: "bull", y: 62 },
-  { name: "CEMENT", pct: "+2.22%", type: "bull", y: 104 },
-  { name: "FINANCE", pct: "+1.95%", type: "bull", y: 146 },
-  { name: "NBFC", pct: "+1.38%", type: "bull", y: 188 },
-  { name: "IT", pct: "+1.14%", type: "bull", y: 230 },
-  { name: "INFRA", pct: "+0.85%", type: "bull", y: 272 },
-  { name: "PHARMA", pct: "+0.45%", type: "bull", y: 314 },
-  { name: "CHEMICAL", pct: "+0.12%", type: "bull", y: 356 },
-  { name: "REALTY", pct: "-0.34%", type: "bear", y: 410 },
-  { name: "FMCG", pct: "-0.78%", type: "bear", y: 452 },
-  { name: "MEDIA", pct: "-1.10%", type: "bear", y: 494 },
-  { name: "OIL & GAS", pct: "-1.45%", type: "bear", y: 536 },
-  { name: "CONSUMER", pct: "-1.82%", type: "bear", y: 578 },
-  { name: "ENERGY", pct: "-2.30%", type: "bear", y: 620 }
+  { name: "LOGISTICS", pct: "+2.41%", type: "bull", y: 60 },
+  { name: "CEMENT", pct: "+2.22%", type: "bull", y: 100 },
+  { name: "FINANCE", pct: "+1.95%", type: "bull", y: 140 },
+  { name: "NBFC", pct: "+1.38%", type: "bull", y: 180 },
+  { name: "IT", pct: "+1.14%", type: "bull", y: 220 },
+  { name: "INFRA", pct: "+0.85%", type: "bull", y: 260 },
+  { name: "PHARMA", pct: "+0.45%", type: "bull", y: 300 },
+  { name: "CHEMICAL", pct: "+0.12%", type: "bull", y: 340 },
+  { name: "REALTY", pct: "-0.34%", type: "bear", y: 450 },
+  { name: "FMCG", pct: "-0.78%", type: "bear", y: 495 },
+  { name: "MEDIA", pct: "-1.10%", type: "bear", y: 540 },
+  { name: "OIL & GAS", pct: "-1.45%", type: "bear", y: 585 },
+  { name: "CONSUMER", pct: "-1.82%", type: "bear", y: 630 },
+  { name: "ENERGY", pct: "-2.30%", type: "bear", y: 675 }
 ];
 
-const cards = [
-  { name: "EICHERMOT", sec: "AUTO", pct: "+4.17%", price: "7,058.00", vwap: "7,015.20", sup: "7,001.00", res: "7,088.00", type: "bull", y: 20 },
-  { name: "TVSMOTOR", sec: "AUTO", pct: "+2.48%", price: "2,480.00", vwap: "2,460.00", sup: "2,450.00", res: "2,510.00", type: "bull", y: 78 },
-  { name: "INOXWIND", sec: "ENERGY", pct: "+6.76%", price: "142.10", vwap: "136.50", sup: "138.00", res: "146.00", type: "bull", y: 136 },
-  { name: "TCS", sec: "IT", pct: "+3.92%", price: "4,120.00", vwap: "4,070.00", sup: "4,050.00", res: "4,160.00", type: "bull", y: 194 },
-  { name: "AUROPHARMA", sec: "PHARMA", pct: "+2.85%", price: "1,245.00", vwap: "1,228.00", sup: "1,220.00", res: "1,260.00", type: "bull", y: 252 },
-  { name: "FEDERALBNK", sec: "FINANCE", pct: "+2.11%", price: "192.50", vwap: "189.20", sup: "188.00", res: "195.00", type: "bull", y: 310 },
-  { name: "ANANDRATHI", sec: "FINANCE", pct: "-4.68%", price: "2,038.20", vwap: "2,090.00", sup: "2,010.00", res: "2,080.00", type: "bear", y: 420 },
-  { name: "MPHASIS", sec: "IT", pct: "-2.14%", price: "2,610.00", vwap: "2,650.00", sup: "2,580.00", res: "2,640.00", type: "bear", y: 478 },
-  { name: "COFORGE", sec: "IT", pct: "-1.85%", price: "7,450.00", vwap: "7,520.00", sup: "7,380.00", res: "7,510.00", type: "bear", y: 536 },
-  { name: "ITC", sec: "FMCG", pct: "-1.25%", price: "488.00", vwap: "494.00", sup: "484.00", res: "492.00", type: "bear", y: 594 }
-];
-
-const container = document.getElementById("nodesContainer");
-
-sectors.forEach(s => {
-  const el = document.createElement("div");
-  el.className = `sec-item ${s.type === 'bull' ? 'bull-sec' : 'bear-sec'}`;
-  el.style.left = "15px";
-  el.style.top = s.y + "px";
-  el.innerHTML = `<span>${s.name}</span><span style="color:${s.type === 'bull' ? '#10b981' : '#ef4444'}">${s.pct}</span>`;
-  container.appendChild(el);
-});
-
-cards.forEach(c => {
-  const el = document.createElement("div");
-  el.className = `stock-card ${c.type}`;
-  el.style.left = "740px";
-  el.style.top = c.y + "px";
-  el.onclick = () => showPopup(c);
-  el.innerHTML = `
-    <div class="card-row1">
-      <span>${c.name}</span>
-      <span style="color:${c.type === 'bull' ? '#10b981' : '#ef4444'}">${c.pct}</span>
-    </div>
-    <div class="card-row2">
-      <span>₹${c.price} • ${c.sec}</span>
-      <span style="color:${c.type === 'bull' ? '#10b981' : '#ef4444'}">${c.type === 'bull' ? 'LONG BUILD-UP' : 'SHORT BUILD-UP'}</span>
-    </div>
-  `;
-  container.appendChild(el);
-});
-
-const canvas = document.getElementById("flowCanvas");
-const ctx = canvas.getContext("2d");
-const ladderX = 460;
-const inTracks = [];
-const outTracks = [];
-
-sectors.forEach(s => {
-  const count = s.type === "bull" ? 14 : 11;
-  for (let i = 0; i < count; i++) {
-    const targetY = s.type === "bull" 
-      ? 20 + Math.random() * 340 
-      : 420 + Math.random() * 230;
-    inTracks.push({
-      p0: [155, s.y + 16],
-      p1: [155 + (ladderX - 155) * 0.45, s.y + 16],
-      p2: [155 + (ladderX - 155) * 0.75, targetY],
-      p3: [ladderX, targetY],
-      type: s.type,
-      width: 0.6
-    });
-  }
-});
-
-cards.forEach(c => {
-  for (let i = 0; i < 2; i++) {
-    const srcY = c.type === "bull" 
-      ? 30 + Math.random() * 310 
-      : 430 + Math.random() * 200;
-    outTracks.push({
-      p0: [ladderX + 48, srcY],
-      p1: [ladderX + 110, srcY],
-      p2: [680, c.y + 24],
-      p3: [740, c.y + 24],
-      type: c.type,
-      width: 0.8
-    });
-  }
-});
-
-const inPulses = inTracks.map((tr, idx) => ({
-  trackIndex: idx,
-  t: Math.random(),
-  speed: 0.0035 + Math.random() * 0.0025,
-  len: 0.12 + Math.random() * 0.08
-}));
-
-const outPulses = outTracks.map((tr, idx) => ({
-  trackIndex: idx,
-  t: Math.random(),
-  speed: 0.003 + Math.random() * 0.002,
-  len: 0.16 + Math.random() * 0.06
-}));
-
-function getBezierPoint(p0, p1, p2, p3, t) {
-  const cx = 3 * (p1[0] - p0[0]);
-  const bx = 3 * (p2[0] - p1[0]) - cx;
-  const ax = p3[0] - p0[0] - cx - bx;
-
-  const cy = 3 * (p1[1] - p0[1]);
-  const by = 3 * (p2[1] - p1[1]) - cy;
-  const ay = p3[1] - p0[1] - cy - by;
-
-  const xt = ax * (t * t * t) + bx * (t * t) + cx * t + p0[0];
-  const yt = ay * (t * t * t) + by * (t * t) + cy * t + p0[1];
-  return [xt, yt];
-}
-
-function render() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // 1. INFLOW LINES (0.2 Opacity Base Web)
-  inTracks.forEach(tr => {
-    ctx.beginPath();
-    ctx.moveTo(tr.p0[0], tr.p0[1]);
-    ctx.bezierCurveTo(tr.p1[0], tr.p1[1], tr.p2[0], tr.p2[1], tr.p3[0], tr.p3[1]);
-    ctx.strokeStyle = tr.type === "bull" ? "rgba(16, 185, 129, 0.2)" : "rgba(239, 68, 68, 0.2)";
-    ctx.lineWidth = tr.width;
-    ctx.stroke();
-  });
-
-  // 2. OUTFLOW LINES (0.2 Opacity Base Filtered)
-  outTracks.forEach(tr => {
-    ctx.beginPath();
-    ctx.moveTo(tr.p0[0], tr.p0[1]);
-    ctx.bezierCurveTo(tr.p1[0], tr.p1[1], tr.p2[0], tr.p2[1], tr.p3[0], tr.p3[1]);
-    ctx.strokeStyle = tr.type === "bull" ? "rgba(16, 185, 129, 0.2)" : "rgba(239, 68, 68, 0.2)";
-    ctx.lineWidth = tr.width;
-    ctx.stroke();
-  });
-
-  // 3. MIDDLE LADDER TICKS
-  for (let i = 0; i < 70; i++) {
-    const isBull = i < 48;
-    const y = 20 + i * 9;
-    ctx.beginPath();
-    ctx.moveTo(ladderX, y);
-    ctx.lineTo(ladderX + 28, y);
-    ctx.strokeStyle = isBull ? "rgba(16, 185, 129, 0.45)" : "rgba(239, 68, 68, 0.45)";
-    ctx.lineWidth = 1.4;
-    ctx.stroke();
-  }
-
-  // Bracket Boxes
-  ctx.strokeStyle = "rgba(56, 139, 253, 0.75)";
-  ctx.lineWidth = 1.8;
-  ctx.strokeRect(ladderX + 44, 20, 4, 340);
-  ctx.strokeStyle = "rgba(239, 68, 68, 0.75)";
-  ctx.strokeRect(ladderX + 44, 420, 4, 230);
-
-  // 4. MOVING FLOW GLOW (Smooth Liquid Stream)
-  inPulses.forEach(pt => {
-    pt.t += pt.speed;
-    if (pt.t > 1) pt.t = 0;
-
-    const tr = inTracks[pt.trackIndex];
-    const head = getBezierPoint(tr.p0, tr.p1, tr.p2, tr.p3, pt.t);
-    const tail = getBezierPoint(tr.p0, tr.p1, tr.p2, tr.p3, Math.max(0, pt.t - pt.len));
-
-    const grad = ctx.createLinearGradient(tail[0], tail[1], head[0], head[1]);
-    if (tr.type === "bull") {
-      grad.addColorStop(0, "rgba(16, 185, 129, 0)");
-      grad.addColorStop(1, "rgba(167, 243, 208, 0.85)");
-    } else {
-      grad.addColorStop(0, "rgba(239, 68, 68, 0)");
-      grad.addColorStop(1, "rgba(254, 202, 202, 0.85)");
-    }
-
-    ctx.beginPath();
-    ctx.moveTo(tail[0], tail[1]);
-    ctx.lineTo(head[0], head[1]);
-    ctx.strokeStyle = grad;
-    ctx.lineWidth = 1.0;
-    ctx.stroke();
-  });
-
-  outPulses.forEach(pt => {
-    pt.t += pt.speed;
-    if (pt.t > 1) pt.t = 0;
-
-    const tr = outTracks[pt.trackIndex];
-    const head = getBezierPoint(tr.p0, tr.p1, tr.p2, tr.p3, pt.t);
-    const tail = getBezierPoint(tr.p0, tr.p1, tr.p2, tr.p3, Math.max(0, pt.t - pt.len));
-
-    const grad = ctx.createLinearGradient(tail[0], tail[1], head[0], head[1]);
-    if (tr.type === "bull") {
-      grad.addColorStop(0, "rgba(16, 185, 129, 0)");
-      grad.addColorStop(1, "rgba(52, 211, 153, 0.95)");
-    } else {
-      grad.addColorStop(0, "rgba(239, 68, 68, 0)");
-      grad.addColorStop(1, "rgba(248, 113, 113, 0.95)");
-    }
-
-    ctx.beginPath();
-    ctx.moveTo(tail[0], tail[1]);
-    ctx.lineTo(head[0], head[1]);
-    ctx.strokeStyle = grad;
-    ctx.lineWidth = 1.3;
-    ctx.stroke();
-  });
-
-  requestAnimationFrame(render);
-}
-
-requestAnimationFrame(render);
-
-function showPopup(d) {
-  document.getElementById("popStock").innerText = d.name;
-  document.getElementById("popSector").innerText = d.sec + " SECTOR";
-  document.getElementById("popPrice").innerText = "₹" + d.price;
-  const p = document.getElementById("popPct");
-  p.innerText = d.pct;
-  p.style.color = d.type === "bull" ? "#10b981" : "#ef4444";
-  document.getElementById("popVwap").innerText = d.vwap;
-  document.getElementById("popSup").innerText = d.sup;
-  document.getElementById("popRes").innerText = d.res;
-  document.getElementById("info-modal").style.display = "flex";
-}
-function closePopup() {
-  document.getElementById("info-modal").style.display = "none";
-}
-</script>
-</body>
-</html>
+// Right Stock Cards - Asymmetric distribution (Bullish dominates top 7 cards, Bearish only 3
