@@ -1,222 +1,130 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-st.set_page_config(page_title="OrderBlock D3 Engine", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="OrderBlock Pro Engine", layout="wide", initial_sidebar_state="collapsed")
 
-d3_sankey_html = """
+dense_flow_html = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- Load D3.js Official Library -->
+<meta name="viewport" content="width=device-width, initial-scale=0.85">
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
-  body { background-color: #0b0f17; color: #e6edf3; padding: 12px; overflow-x: auto; }
-  
-  .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #21262d; padding-bottom: 8px; margin-bottom: 12px; }
-  .badge { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 4px 10px; font-size: 11px; }
-  .bull { color: #10b981; font-weight: bold; }
-  .bear { color: #ef4444; font-weight: bold; }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  body { background-color: #0d1117; color: #e6edf3; padding: 10px; overflow-x: auto; user-select: none; }
 
-  #viz-container { position: relative; width: 920px; height: 500px; }
+  /* Top Bar */
+  .top-stats { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #21262d; padding-bottom: 8px; margin-bottom: 10px; }
+  .counter-box { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 4px 12px; font-size: 12px; font-weight: 600; }
+
+  /* Main Canvas Container */
+  #main-viewport { position: relative; width: 1100px; height: 680px; }
   svg { width: 100%; height: 100%; }
 
-  /* D3 Flow Styles */
-  .flow-line { fill: none; opacity: 0.45; transition: opacity 0.2s, stroke-width 0.2s; }
-  .flow-line:hover { opacity: 0.9; stroke-width: 3.5px !important; }
-  .node-box { rx: 4px; ry: 4px; cursor: pointer; }
-  .node-text { font-size: 11px; fill: #e6edf3; font-weight: 500; pointer-events: none; }
-  .pct-text { font-size: 10px; font-weight: bold; pointer-events: none; }
+  /* Dense SVG Web Flow */
+  .flow-curve { fill: none; opacity: 0.28; transition: opacity 0.2s, stroke-width 0.2s; }
+  .flow-curve:hover { opacity: 0.95; stroke-width: 2.2px !important; }
+  
+  /* Middle Dense Ladder */
+  .ladder-tick { stroke-width: 1.5; opacity: 0.5; }
+  .ladder-bracket { stroke: #388bfd; stroke-width: 2; fill: none; opacity: 0.8; }
 
-  /* Modal */
+  /* Nodes & Text */
+  .sec-box { rx: 4px; ry: 4px; fill: #161b22; stroke: #30363d; }
+  .sec-label { font-size: 11px; fill: #c9d1d9; font-weight: 600; pointer-events: none; }
+  .sec-pct { font-size: 10px; font-weight: bold; pointer-events: none; }
+
+  /* Stock Cards */
+  .card-box { rx: 5px; ry: 5px; cursor: pointer; transition: 0.15s; }
+  .card-box:hover { filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.4)); }
+  .card-title { font-size: 12px; font-weight: 700; fill: #ffffff; pointer-events: none; }
+  .card-sub { font-size: 10px; fill: #8b949e; pointer-events: none; }
+  .card-tag { font-size: 9px; font-weight: 700; pointer-events: none; }
+
+  /* Modal Popup */
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 999; justify-content: center; align-items: center; }
-  .modal-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; width: 90%; max-width: 440px; padding: 16px; }
-  .modal-close { float: right; background: none; border: none; color: #8b949e; font-size: 20px; cursor: pointer; }
-  .ob-box { background: rgba(16, 185, 129, 0.12); border: 1px dashed #10b981; border-radius: 4px; padding: 10px; margin: 12px 0; font-size: 12px; }
-  .modal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; font-size: 11px; background: #0d1117; padding: 8px; border-radius: 4px; }
+  .modal-window { background: #161b22; border: 1px solid #30363d; border-radius: 8px; width: 440px; padding: 16px; }
+  .close-x { float: right; background: none; border: none; color: #8b949e; font-size: 20px; cursor: pointer; }
+  .ob-highlight { background: rgba(16, 185, 129, 0.15); border: 1px dashed #10b981; border-radius: 4px; padding: 10px; margin: 12px 0; font-size: 12px; }
+  .grid-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; font-size: 11px; background: #0d1117; padding: 8px; border-radius: 4px; }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div style="font-size:14px; font-weight:bold;">ORDERBLOCK FLOW D3 ENGINE</div>
-  <div class="badge">▲ <span class="bull">172</span> | ▼ <span class="bear">41</span></div>
+<div class="top-stats">
+  <div style="font-size: 13px; font-weight: 700; letter-spacing: 0.5px;">ORDERBLOCK LIQUIDITY FLOW</div>
+  <div class="counter-box">
+    BULLISH <span style="color:#10b981;">172</span> &nbsp;|&nbsp; BEARISH <span style="color:#ef4444;">41</span>
+  </div>
 </div>
 
-<div id="viz-container">
-  <svg id="canvas"></svg>
+<div id="main-viewport">
+  <svg id="chart-svg"></svg>
 </div>
 
-<!-- Interactive Modal -->
-<div class="modal-overlay" id="modal">
-  <div class="modal-card">
-    <button class="modal-close" onclick="closeModal()">✕</button>
-    <div style="font-size:16px; font-weight:bold;" id="mStock">STOCK</div>
-    <div style="font-size:11px; color:#8b949e; margin-bottom:8px;" id="mSector">SECTOR</div>
-    <div style="font-size:22px; font-weight:bold;" id="mPrice">₹0.00</div>
-    <div style="font-size:12px; margin-bottom:10px;" id="mPct">+0.00%</div>
-    
-    <div class="ob-box">
-      <strong>🎯 ORDER BLOCK ZONE:</strong> <span id="mZone">10:00 AM Session</span><br>
-      Accumulation Level: <span style="color:#10b981; font-weight:bold;">Breakout Zone</span>
+<!-- Modal Details -->
+<div class="modal-overlay" id="info-modal">
+  <div class="modal-window">
+    <button class="close-x" onclick="closePopup()">✕</button>
+    <div style="font-size:16px; font-weight:bold;" id="popStock">STOCK</div>
+    <div style="font-size:11px; color:#8b949e; margin-bottom:8px;" id="popSector">SECTOR</div>
+    <div style="font-size:22px; font-weight:bold;" id="popPrice">₹0.00</div>
+    <div style="font-size:12px; margin-bottom:10px;" id="popPct">+0.00%</div>
+
+    <div class="ob-highlight">
+      <strong>🎯 ORDER BLOCK DETECTED:</strong> <span id="popZone">10:00 AM Open Range</span><br>
+      Liquidity Sweep: <span style="color:#10b981; font-weight:bold;">Long Build-Up Confirmed</span>
     </div>
 
-    <div class="modal-grid">
-      <div>VWAP: <b style="color:white;" id="mVwap">7,015.20</b></div>
-      <div>OI: <b style="color:#10b981;">+14.2%</b></div>
-      <div>CONF: <b style="color:white;">98/100</b></div>
+    <div class="grid-metrics">
+      <div>VWAP: <b style="color:white;" id="popVwap">0.00</b></div>
+      <div>OI SURGE: <b style="color:#10b981;" id="popOi">+13.4%</b></div>
+      <div>CONV: <b style="color:white;">98/100</b></div>
+      <div>SUPPORT: <b style="color:white;" id="popSup">0.00</b></div>
+      <div>RESIST: <b style="color:white;" id="popRes">0.00</b></div>
+      <div>BIAS: <b style="color:#10b981;">BULLISH</b></div>
     </div>
   </div>
 </div>
 
 <script>
-// 1. Data Definitions
+// Data Setup
 const sectors = [
-  { id: 'sec_auto', name: 'AUTO', pct: '+2.87%', type: 'bull', y: 30 },
-  { id: 'sec_cement', name: 'CEMENT', pct: '+2.22%', type: 'bull', y: 80 },
-  { id: 'sec_fin', name: 'FINANCE', pct: '+1.04%', type: 'bull', y: 130 },
-  { id: 'sec_it', name: 'IT', pct: '+0.81%', type: 'bull', y: 180 },
-  { id: 'sec_metal', name: 'METAL', pct: '+0.52%', type: 'bull', y: 230 },
-  { id: 'sec_realty', name: 'REALTY', pct: '-0.34%', type: 'bear', y: 290 },
-  { id: 'sec_fmcg', name: 'FMCG', pct: '-0.88%', type: 'bear', y: 340 },
-  { id: 'sec_media', name: 'MEDIA', pct: '-1.12%', type: 'bear', y: 390 },
-  { id: 'sec_oil', name: 'OIL & GAS', pct: '-1.45%', type: 'bear', y: 440 }
+  { id: 0, name: "AUTO", pct: "+2.87%", type: "bull", y: 20 },
+  { id: 1, name: "LOGISTICS", pct: "+2.41%", type: "bull", y: 62 },
+  { id: 2, name: "CEMENT", pct: "+2.22%", type: "bull", y: 104 },
+  { id: 3, name: "FINANCE", pct: "+1.95%", type: "bull", y: 146 },
+  { id: 4, name: "NBFC", pct: "+1.38%", type: "bull", y: 188 },
+  { id: 5, name: "IT", pct: "+1.14%", type: "bull", y: 230 },
+  { id: 6, name: "INFRA", pct: "+0.85%", type: "bull", y: 272 },
+  { id: 7, name: "PHARMA", pct: "+0.45%", type: "bull", y: 314 },
+  { id: 8, name: "CHEMICAL", pct: "+0.12%", type: "bull", y: 356 },
+  { id: 9, name: "REALTY", pct: "-0.34%", type: "bear", y: 410 },
+  { id: 10, name: "FMCG", pct: "-0.78%", type: "bear", y: 452 },
+  { id: 11, name: "MEDIA", pct: "-1.10%", type: "bear", y: 494 },
+  { id: 12, name: "OIL & GAS", pct: "-1.45%", type: "bear", y: 536 },
+  { id: 13, name: "CONSUMER", pct: "-1.82%", type: "bear", y: 578 },
+  { id: 14, name: "ENERGY", pct: "-2.30%", type: "bear", y: 620 }
 ];
 
-const stocks = [
-  { id: 'st_eicher', name: 'EICHERMOT', sec: 'AUTO', pct: '+4.17%', price: '7,058.00', type: 'bull', y: 40, vwap: '7,015.20' },
-  { id: 'st_tvs', name: 'TVSMOTOR', sec: 'AUTO', pct: '+1.71%', price: '2,480.00', type: 'bull', y: 105, vwap: '2,455.00' },
-  { id: 'st_inox', name: 'INOXWIND', sec: 'ENERGY', pct: '+6.76%', price: '142.10', type: 'bull', y: 170, vwap: '136.50' },
-  { id: 'st_tcs', name: 'TCS', sec: 'IT', pct: '+3.92%', price: '4,120.00', type: 'bull', y: 235, vwap: '4,070.00' },
-  { id: 'st_anand', name: 'ANANDRATHI', sec: 'FINANCE', pct: '-4.68%', price: '2,038.20', type: 'bear', y: 320, vwap: '2,090.00' },
-  { id: 'st_mphasis', name: 'MPHASIS', sec: 'IT', pct: '-2.14%', price: '2,610.00', type: 'bear', y: 385, vwap: '2,650.00' },
-  { id: 'st_itc', name: 'ITC', sec: 'FMCG', pct: '-1.25%', price: '488.00', type: 'bear', y: 450, vwap: '494.00' }
+const cards = [
+  // Top Bullish (Green)
+  { id: 0, name: "EICHERMOT", sec: "AUTO", pct: "+4.17%", price: "7,058.00", vwap: "7,015.20", sup: "7,001.00", res: "7,088.00", type: "bull", y: 20 },
+  { id: 1, name: "TVSMOTOR", sec: "AUTO", pct: "+2.48%", price: "2,480.00", vwap: "2,460.00", sup: "2,450.00", res: "2,510.00", type: "bull", y: 78 },
+  { id: 2, name: "INOXWIND", sec: "ENERGY", pct: "+6.76%", price: "142.10", vwap: "136.50", sup: "138.00", res: "146.00", type: "bull", y: 136 },
+  { id: 3, name: "TCS", sec: "IT", pct: "+3.92%", price: "4,120.00", vwap: "4,070.00", sup: "4,050.00", res: "4,160.00", type: "bull", y: 194 },
+  { id: 4, name: "AUROPHARMA", sec: "PHARMA", pct: "+2.85%", price: "1,245.00", vwap: "1,228.00", sup: "1,220.00", res: "1,260.00", type: "bull", y: 252 },
+  { id: 5, name: "FEDERALBNK", sec: "FINANCE", pct: "+2.11%", price: "192.50", vwap: "189.20", sup: "188.00", res: "195.00", type: "bull", y: 310 },
+  // Bearish (Red)
+  { id: 6, name: "ANANDRATHI", sec: "FINANCE", pct: "-4.68%", price: "2,038.20", vwap: "2,090.00", sup: "2,010.00", res: "2,080.00", type: "bear", y: 420 },
+  { id: 7, name: "MPHASIS", sec: "IT", pct: "-2.14%", price: "2,610.00", vwap: "2,650.00", sup: "2,580.00", res: "2,640.00", type: "bear", y: 478 },
+  { id: 8, name: "COFORGE", sec: "IT", pct: "-1.85%", price: "7,450.00", vwap: "7,520.00", sup: "7,380.00", res: "7,510.00", type: "bear", y: 536 },
+  { id: 9, name: "ITC", sec: "FMCG", pct: "-1.25%", price: "488.00", vwap: "494.00", sup: "484.00", res: "492.00", type: "bear", y: 594 }
 ];
 
-const links = [
-  { sourceY: 30, targetY: 40, type: 'bull' },
-  { sourceY: 30, targetY: 105, type: 'bull' },
-  { sourceY: 80, targetY: 40, type: 'bull' },
-  { sourceY: 180, targetY: 235, type: 'bull' },
-  { sourceY: 130, targetY: 170, type: 'bull' },
-  { sourceY: 290, targetY: 320, type: 'bear' },
-  { sourceY: 340, targetY: 450, type: 'bear' },
-  { sourceY: 180, targetY: 385, type: 'bear' },
-  { sourceY: 440, targetY: 320, type: 'bear' }
-];
+const svg = d3.select("#chart-svg");
 
-// 2. D3 Rendering
-const svg = d3.select("#canvas");
-
-// Draw Flow Lines using D3 Link Generator (Bézier curves)
-const linkGen = d3.linkHorizontal()
-  .source(d => [140, d.sourceY + 15])
-  .target(d => [620, d.targetY + 20]);
-
-svg.selectAll(".flow-line")
-  .data(links)
-  .enter()
-  .append("path")
-  .attr("class", "flow-line")
-  .attr("d", linkGen)
-  .attr("stroke", d => d.type === 'bull' ? '#10b981' : '#ef4444')
-  .attr("stroke-width", 1.8);
-
-// Draw Middle Bracket Flow
-svg.append("line")
-  .attr("x1", 380).attr("y1", 20)
-  .attr("x2", 380).attr("y2", 480)
-  .attr("stroke", "#30363d")
-  .attr("stroke-dasharray", "4,4")
-  .attr("stroke-width", 2);
-
-// Draw Sector Nodes (Left)
-const secGroups = svg.selectAll(".sec-node")
+// 1. Draw Sectors (Left)
+const secGroup = svg.selectAll(".sec-g")
   .data(sectors)
-  .enter()
-  .append("g")
-  .attr("transform", d => `translate(10, ${d.y})`);
-
-secGroups.append("rect")
-  .attr("width", 130).attr("height", 30)
-  .attr("class", "node-box")
-  .attr("fill", "#161b22")
-  .attr("stroke", "#30363d");
-
-secGroups.append("text")
-  .attr("x", 10).attr("y", 19)
-  .attr("class", "node-text")
-  .text(d => d.name);
-
-secGroups.append("text")
-  .attr("x", 120).attr("y", 19)
-  .attr("text-anchor", "end")
-  .attr("class", "pct-text")
-  .attr("fill", d => d.type === 'bull' ? '#10b981' : '#ef4444')
-  .text(d => d.pct);
-
-// Draw Stock Cards (Right)
-const stockGroups = svg.selectAll(".stock-node")
-  .data(stocks)
-  .enter()
-  .append("g")
-  .attr("transform", d => `translate(620, ${d.y})`)
-  .style("cursor", "pointer")
-  .on("click", (e, d) => openModal(d));
-
-stockGroups.append("rect")
-  .attr("width", 260).attr("height", 45)
-  .attr("class", "node-box")
-  .attr("fill", "#131920")
-  .attr("stroke", d => d.type === 'bull' ? '#10b981' : '#ef4444')
-  .attr("stroke-width", 1.5);
-
-stockGroups.append("text")
-  .attr("x", 12).attr("y", 20)
-  .attr("class", "node-text")
-  .style("font-weight", "bold")
-  .text(d => d.name);
-
-stockGroups.append("text")
-  .attr("x", 12).attr("y", 36)
-  .attr("fill", "#8b949e")
-  .style("font-size", "10px")
-  .text(d => "₹" + d.price);
-
-stockGroups.append("text")
-  .attr("x", 248).attr("y", 22)
-  .attr("text-anchor", "end")
-  .attr("class", "pct-text")
-  .attr("fill", d => d.type === 'bull' ? '#10b981' : '#ef4444')
-  .text(d => d.pct);
-
-stockGroups.append("text")
-  .attr("x", 248).attr("y", 36)
-  .attr("text-anchor", "end")
-  .attr("fill", d => d.type === 'bull' ? '#10b981' : '#ef4444')
-  .style("font-size", "9px")
-  .text(d => d.type === 'bull' ? 'BUY BLOCK' : 'SELL BLOCK');
-
-// Modal Logic
-function openModal(d) {
-  document.getElementById('mStock').innerText = d.name;
-  document.getElementById('mSector').innerText = d.sec + ' SECTOR';
-  document.getElementById('mPrice').innerText = '₹' + d.price;
-  const p = document.getElementById('mPct');
-  p.innerText = d.pct;
-  p.className = d.type === 'bull' ? 'bull' : 'bear';
-  document.getElementById('mVwap').innerText = d.vwap;
-  document.getElementById('modal').style.display = 'flex';
-}
-
-function closeModal() {
-  document.getElementById('modal').style.display = 'none';
-}
-</script>
-</body>
-</html>
-"""
-
-components.html(d3_sankey_html, height=580, scrolling=True)
