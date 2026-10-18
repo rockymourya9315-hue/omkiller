@@ -11,11 +11,7 @@
   .counter-box { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 4px 12px; font-size: 12px; font-weight: 600; }
 
   #main-viewport { position: relative; width: 1100px; height: 680px; }
-  
-  /* GPU Rendered Layer */
   #flowCanvas { position: absolute; left: 0; top: 0; width: 1100px; height: 680px; pointer-events: none; z-index: 1; }
-
-  /* DOM Nodes on Top */
   .nodes-layer { position: absolute; left: 0; top: 0; width: 1100px; height: 680px; z-index: 2; pointer-events: auto; }
   
   .sec-item {
@@ -36,7 +32,6 @@
   .card-row1 { display: flex; justify-content: space-between; font-weight: 700; font-size: 12px; }
   .card-row2 { display: flex; justify-content: space-between; font-size: 10px; color: #8b949e; margin-top: 2px; }
 
-  /* Modal */
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 999; justify-content: center; align-items: center; }
   .modal-window { background: #161b22; border: 1px solid #30363d; border-radius: 8px; width: 440px; padding: 16px; }
   .close-x { float: right; background: none; border: none; color: #8b949e; font-size: 20px; cursor: pointer; }
@@ -112,7 +107,6 @@ const cards = [
   { name: "ITC", sec: "FMCG", pct: "-1.25%", price: "488.00", vwap: "494.00", sup: "484.00", res: "492.00", type: "bear", y: 594 }
 ];
 
-// Build DOM Nodes
 const container = document.getElementById("nodesContainer");
 
 sectors.forEach(s => {
@@ -143,52 +137,46 @@ cards.forEach(c => {
   container.appendChild(el);
 });
 
-// Setup Canvas GPU Simulation
 const canvas = document.getElementById("flowCanvas");
 const ctx = canvas.getContext("2d");
-
 const ladderX = 460;
-const particles = [];
 const tracks = [];
 
-// Create Tracks (Sectors -> Ladder)
 sectors.forEach(s => {
   const count = s.type === "bull" ? 5 : 4;
   for (let i = 0; i < count; i++) {
     const targetY = s.type === "bull" ? 20 + Math.random() * 340 : 420 + Math.random() * 230;
     tracks.push({
       p0: [155, s.y + 16],
-      p1: [ladderX * 0.55, s.y + 16],
+      p1: [ladderX * 0.45, s.y + 16],
       p2: [ladderX * 0.75, targetY],
       p3: [ladderX, targetY],
-      type: s.type
+      type: s.type,
+      width: Math.random() * 0.8 + 1.2
     });
   }
 });
 
-// Create Tracks (Ladder -> Cards)
 cards.forEach(c => {
   for (let i = 0; i < 4; i++) {
     const srcY = c.type === "bull" ? 25 + Math.random() * 320 : 425 + Math.random() * 210;
     tracks.push({
       p0: [ladderX + 48, srcY],
-      p1: [ladderX + 120, srcY],
+      p1: [ladderX + 110, srcY],
       p2: [680, c.y + 24],
       p3: [740, c.y + 24],
-      type: c.type
+      type: c.type,
+      width: Math.random() * 0.8 + 1.2
     });
   }
 });
 
-// Instantiate Particle Pulses
-tracks.forEach((track, idx) => {
-  particles.push({
-    trackIndex: idx,
-    t: Math.random(),
-    speed: 0.004 + Math.random() * 0.003,
-    len: 0.12 + Math.random() * 0.08
-  });
-});
+const pulses = tracks.map((tr, idx) => ({
+  trackIndex: idx,
+  t: Math.random(),
+  speed: 0.0035 + Math.random() * 0.0025,
+  len: 0.16 + Math.random() * 0.08
+}));
 
 function getBezierPoint(p0, p1, p2, p3, t) {
   const cx = 3 * (p1[0] - p0[0]);
@@ -204,34 +192,40 @@ function getBezierPoint(p0, p1, p2, p3, t) {
   return [xt, yt];
 }
 
-// 60FPS RAF Engine
 function render() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // 1. Draw Static Guides
+  // 1. Draw Visible Base Curved Tracks (Poori saaf dikhne wali lines)
   tracks.forEach(tr => {
     ctx.beginPath();
     ctx.moveTo(tr.p0[0], tr.p0[1]);
     ctx.bezierCurveTo(tr.p1[0], tr.p1[1], tr.p2[0], tr.p2[1], tr.p3[0], tr.p3[1]);
-    ctx.strokeStyle = tr.type === "bull" ? "rgba(16, 185, 129, 0.12)" : "rgba(239, 68, 68, 0.12)";
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = tr.type === "bull" ? "rgba(16, 185, 129, 0.42)" : "rgba(239, 68, 68, 0.42)";
+    ctx.lineWidth = tr.width;
     ctx.stroke();
   });
 
-  // 2. Draw Ladder Marks
+  // 2. Draw Ladder Ticks
   for (let i = 0; i < 70; i++) {
     const isBull = i < 48;
     const y = 20 + i * 9;
     ctx.beginPath();
     ctx.moveTo(ladderX, y);
     ctx.lineTo(ladderX + 24, y);
-    ctx.strokeStyle = isBull ? "rgba(16, 185, 129, 0.4)" : "rgba(239, 68, 68, 0.4)";
+    ctx.strokeStyle = isBull ? "rgba(16, 185, 129, 0.55)" : "rgba(239, 68, 68, 0.55)";
     ctx.lineWidth = 1.5;
     ctx.stroke();
   }
 
-  // 3. Draw Flow Pulses
-  particles.forEach(pt => {
+  // Bracket Guides
+  ctx.strokeStyle = "rgba(56, 139, 253, 0.85)";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(ladderX + 44, 20, 4, 340);
+  ctx.strokeStyle = "rgba(239, 68, 68, 0.85)";
+  ctx.strokeRect(ladderX + 44, 420, 4, 230);
+
+  // 3. Draw Moving Comet Glow Waves (Smooth Liquid Flow)
+  pulses.forEach(pt => {
     pt.t += pt.speed;
     if (pt.t > 1) pt.t = 0;
 
@@ -245,17 +239,17 @@ function render() {
     const grad = ctx.createLinearGradient(tail[0], tail[1], head[0], head[1]);
     if (tr.type === "bull") {
       grad.addColorStop(0, "rgba(16, 185, 129, 0)");
-      grad.addColorStop(1, "rgba(52, 211, 153, 0.95)");
+      grad.addColorStop(1, "rgba(167, 243, 208, 1)");
     } else {
       grad.addColorStop(0, "rgba(239, 68, 68, 0)");
-      grad.addColorStop(1, "rgba(248, 113, 113, 0.95)");
+      grad.addColorStop(1, "rgba(254, 202, 202, 1)");
     }
 
     ctx.beginPath();
     ctx.moveTo(tail[0], tail[1]);
     ctx.lineTo(head[0], head[1]);
     ctx.strokeStyle = grad;
-    ctx.lineWidth = 2.2;
+    ctx.lineWidth = tr.width + 1.2;
     ctx.lineCap = "round";
     ctx.stroke();
   });
@@ -265,7 +259,6 @@ function render() {
 
 requestAnimationFrame(render);
 
-// Popup logic
 function showPopup(d) {
   document.getElementById("popStock").innerText = d.name;
   document.getElementById("popSector").innerText = d.sec + " SECTOR";
