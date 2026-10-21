@@ -17,10 +17,10 @@
     display: flex; gap: 14px; font-size: 11px; font-weight: 700;
     background: #f8fafc; padding: 4px 12px; border-radius: 4px; border: 1px solid #e2e8f0;
   }
-  .bull-count { color: #059669; }
-  .bear-count { color: #dc2626; }
+  .bull-count { color: #059669; transition: color 0.3s; }
+  .bear-count { color: #dc2626; transition: color 0.3s; }
 
-  /* Zoom Controller HUD */
+  /* Zoom Controller */
   .zoom-controls {
     position: fixed; bottom: 20px; right: 20px; z-index: 900;
     display: flex; flex-direction: column; gap: 8px;
@@ -33,7 +33,6 @@
   }
   .zoom-btn:active { background: #e2e8f0; }
 
-  /* Zoomable Pan Canvas Container */
   #pan-wrapper {
     position: relative; width: 100vw; height: calc(100vh - 45px);
     overflow: hidden; touch-action: none;
@@ -46,32 +45,33 @@
   #viewport { position: relative; width: 1300px; height: 780px; background: #f3f6f8; }
   #flowCanvas { position: absolute; left: 0; top: 0; width: 1300px; height: 780px; z-index: 1; pointer-events: none; }
 
+  /* Left Sector List */
   .sector-overlay {
     position: absolute; left: 16px; top: 60px; width: 180px; z-index: 3;
     display: flex; flex-direction: column; gap: 4px; pointer-events: auto;
   }
   .sec-row {
     display: flex; justify-content: space-between; align-items: center;
-    background: rgba(255, 255, 255, 0.9); border: 1px solid #d1d5db; border-radius: 3px;
+    background: rgba(255, 255, 255, 0.92); border: 1px solid #d1d5db; border-radius: 3px;
     padding: 2px 6px; font-size: 10px; font-weight: 600; height: 22px; backdrop-filter: blur(2px);
   }
   .sec-row .bar-wrap { width: 45px; height: 4px; background: #e2e8f0; border-radius: 2px; overflow: hidden; margin: 0 4px; }
   .sec-row .bar-fill { height: 100%; border-radius: 2px; }
 
-  .scanner-overlay {
-    position: absolute; right: 16px; top: 30px; width: 260px; height: 720px; z-index: 3; pointer-events: auto;
-  }
+  /* Right Stock Pills - Absolute placement matching canvas endpoints exactly */
   .stock-pill {
-    position: absolute; right: 0; width: 220px; height: 28px;
-    background: #ffffff; border-left: 3.5px solid #059669; border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06); padding: 3px 8px;
+    position: absolute; left: 1050px; width: 225px; height: 30px;
+    background: #ffffff; border-left: 4px solid #059669; border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08); padding: 3px 8px;
     display: flex; justify-content: space-between; align-items: center; font-size: 10.5px;
-    cursor: pointer; transition: 0.15s;
+    cursor: pointer; transition: transform 0.15s, background-color 0.3s; z-index: 3;
   }
-  .stock-pill:hover { transform: translateX(-3px); box-shadow: 0 3px 8px rgba(0,0,0,0.12); }
+  .stock-pill:hover { transform: translateX(3px); box-shadow: 0 3px 8px rgba(0,0,0,0.14); }
   .stock-pill.bear { border-left-color: #dc2626; }
+  .flash-green { background-color: #ecfdf5 !important; }
+  .flash-red { background-color: #fef2f2 !important; }
 
-  /* Modal Details */
+  /* Modal */
   .modal-backdrop {
     display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6);
     z-index: 999; justify-content: center; align-items: center; backdrop-filter: blur(3px);
@@ -96,8 +96,8 @@
 <div class="top-navbar">
   <div class="brand">ORDER BLOCK • LIQUIDITY ARCHITECTURE</div>
   <div class="stats-counter">
-    <div>BULLISH <span class="bull-count">172</span></div>
-    <div>BEARISH <span class="bear-count">41</span></div>
+    <div>BULLISH <span class="bull-count" id="bullCounter">172</span></div>
+    <div>BEARISH <span class="bear-count" id="bearCounter">41</span></div>
   </div>
 </div>
 
@@ -112,7 +112,7 @@
     <div id="viewport">
       <canvas id="flowCanvas" width="1300" height="780"></canvas>
       <div class="sector-overlay" id="sectorContainer"></div>
-      <div class="scanner-overlay" id="stockContainer"></div>
+      <div id="cardsLayer"></div>
     </div>
   </div>
 </div>
@@ -126,31 +126,27 @@
     <div style="font-size: 11px; font-weight: 700;" id="mPct">+0.00%</div>
     
     <div class="ob-alert">
-      <strong>🎯 ORDER BLOCK DETECTED:</strong> <span id="mZone">09:45 AM Pullback Block</span><br>
-      Status: <span style="font-weight: 700;">Institutional Accumulation</span>
+      <strong>🎯 ORDER BLOCK DETECTED:</strong> <span id="mZone">Pullback Zone</span><br>
+      Status: <span style="font-weight: 700;">Institutional Liquidity Detected</span>
     </div>
 
     <div class="metrics-grid">
       <div>VWAP: <b id="mVwap" style="color:#0f172a;">0.00</b></div>
       <div>CONV: <b style="color:#059669;">98/100</b></div>
-      <div>OI SURGE: <b style="color:#059669;">+18.4%</b></div>
+      <div>OI SURGE: <b style="color:#059669;" id="mOi">+18.4%</b></div>
       <div>SUP 1: <b id="mSup">0.00</b></div>
       <div>RES 1: <b id="mRes">0.00</b></div>
-      <div>BIAS: <b style="color:#059669;">BULLISH</b></div>
+      <div>BIAS: <b style="color:#059669;" id="mBias">BULLISH</b></div>
     </div>
   </div>
 </div>
 
 <script>
-// --- PINCH TO ZOOM & PAN ENGINE ---
+// --- PINCH / ZOOM / PAN ---
 let scale = 0.85;
-let panX = 0;
-let panY = 0;
-let isPanning = false;
-let startX = 0;
-let startY = 0;
-let initialDistance = 0;
-let initialScale = 0.85;
+let panX = 0, panY = 0;
+let isPanning = false, startX = 0, startY = 0;
+let initialDistance = 0, initialScale = 0.85;
 
 const zoomLayer = document.getElementById("zoom-layer");
 const panWrapper = document.getElementById("pan-wrapper");
@@ -161,19 +157,9 @@ function updateTransform() {
 }
 updateTransform();
 
-function applyZoom(delta) {
-  scale += delta;
-  updateTransform();
-}
+function applyZoom(delta) { scale += delta; updateTransform(); }
+function resetZoom() { scale = 0.85; panX = 0; panY = 0; updateTransform(); }
 
-function resetZoom() {
-  scale = 0.85;
-  panX = 0;
-  panY = 0;
-  updateTransform();
-}
-
-// Touch Handling for Mobile Pinch & Drag
 panWrapper.addEventListener('touchstart', (e) => {
   if (e.touches.length === 1) {
     isPanning = true;
@@ -206,104 +192,105 @@ panWrapper.addEventListener('touchmove', (e) => {
   }
 }, { passive: false });
 
-panWrapper.addEventListener('touchend', () => {
-  isPanning = false;
-  initialDistance = 0;
-});
+panWrapper.addEventListener('touchend', () => { isPanning = false; initialDistance = 0; });
+panWrapper.addEventListener('wheel', (e) => { e.preventDefault(); scale += e.deltaY * -0.001; updateTransform(); }, { passive: false });
 
-// Desktop Mouse Wheel & Drag
-panWrapper.addEventListener('wheel', (e) => {
-  e.preventDefault();
-  scale += e.deltaY * -0.001;
-  updateTransform();
-}, { passive: false });
-
-// --- DATA & RENDER ---
+// --- DATA ---
 const sectors = [
-  { name: "IT", pct: "+2.87%", type: "bull", val: 85 },
-  { name: "LOGISTICS", pct: "+2.41%", type: "bull", val: 80 },
-  { name: "CEMENT", pct: "+2.21%", type: "bull", val: 76 },
-  { name: "FMCG", pct: "+1.97%", type: "bull", val: 70 },
-  { name: "NBFC", pct: "+1.88%", type: "bull", val: 68 },
-  { name: "INSURANCE", pct: "+1.69%", type: "bull", val: 62 },
-  { name: "METAL", pct: "+1.67%", type: "bull", val: 60 },
-  { name: "POWER", pct: "+1.65%", type: "bull", val: 59 },
-  { name: "PSU BANK", pct: "+1.59%", type: "bull", val: 56 },
-  { name: "BANK", pct: "+1.38%", type: "bull", val: 50 },
-  { name: "PHARMA", pct: "+1.34%", type: "bull", val: 48 },
-  { name: "NEW-AGE", pct: "+1.31%", type: "bull", val: 45 },
-  { name: "CHEM", pct: "+1.26%", type: "bull", val: 42 },
-  { name: "TELECOM", pct: "+1.21%", type: "bull", val: 40 },
-  { name: "REALTY", pct: "+1.17%", type: "bull", val: 38 },
-  { name: "DEFENCE", pct: "+1.16%", type: "bull", val: 37 },
-  { name: "AUTO", pct: "+1.15%", type: "bull", val: 36 },
-  { name: "CAP GOODS", pct: "+0.77%", type: "bull", val: 28 },
-  { name: "CONSUMER", pct: "+0.71%", type: "bull", val: 24 },
-  { name: "CAP MKTS", pct: "+0.52%", type: "bull", val: 18 },
-  { name: "OIL & GAS", pct: "+0.01%", type: "bull", val: 8 },
-  { name: "MEDIA", pct: "-0.64%", type: "bear", val: 25 },
-  { name: "ENERGY", pct: "-1.12%", type: "bear", val: 40 }
+  { id: "s1", name: "IT", pct: 2.87, type: "bull", val: 85 },
+  { id: "s2", name: "LOGISTICS", pct: 2.41, type: "bull", val: 80 },
+  { id: "s3", name: "CEMENT", pct: 2.21, type: "bull", val: 76 },
+  { id: "s4", name: "FMCG", pct: 1.97, type: "bull", val: 70 },
+  { id: "s5", name: "NBFC", pct: 1.88, type: "bull", val: 68 },
+  { id: "s6", name: "INSURANCE", pct: 1.69, type: "bull", val: 62 },
+  { id: "s7", name: "METAL", pct: 1.67, type: "bull", val: 60 },
+  { id: "s8", name: "POWER", pct: 1.65, type: "bull", val: 59 },
+  { id: "s9", name: "PSU BANK", pct: 1.59, type: "bull", val: 56 },
+  { id: "s10", name: "BANK", pct: 1.38, type: "bull", val: 50 },
+  { id: "s11", name: "PHARMA", pct: 1.34, type: "bull", val: 48 },
+  { id: "s12", name: "NEW-AGE", pct: 1.31, type: "bull", val: 45 },
+  { id: "s13", name: "CHEM", pct: 1.26, type: "bull", val: 42 },
+  { id: "s14", name: "TELECOM", pct: 1.21, type: "bull", val: 40 },
+  { id: "s15", name: "REALTY", pct: 1.17, type: "bull", val: 38 },
+  { id: "s16", name: "DEFENCE", pct: 1.16, type: "bull", val: 37 },
+  { id: "s17", name: "AUTO", pct: 1.15, type: "bull", val: 36 },
+  { id: "s18", name: "CAP GOODS", pct: 0.77, type: "bull", val: 28 },
+  { id: "s19", name: "CONSUMER", pct: 0.71, type: "bull", val: 24 },
+  { id: "s20", name: "CAP MKTS", pct: 0.52, type: "bull", val: 18 },
+  { id: "s21", name: "OIL & GAS", pct: 0.01, type: "bull", val: 8 },
+  { id: "s22", name: "MEDIA", pct: -0.64, type: "bear", val: 25 },
+  { id: "s23", name: "ENERGY", pct: -1.12, type: "bear", val: 40 }
 ];
 
+// Exact vertical positions for cards (Viewport coordinates)
 const topStocks = [
-  { name: "EICHERMOT", sec: "AUTO", pct: "+4.17%", price: "7,058.00", vwap: "7,015.20", sup: "7,001.00", res: "7,088.00", type: "bull", y: 35 },
-  { name: "TVSMOTOR", sec: "AUTO", pct: "+2.48%", price: "2,480.00", vwap: "2,460.00", sup: "2,450.00", res: "2,510.00", type: "bull", y: 75 },
-  { name: "INOXWIND", sec: "ENERGY", pct: "+6.76%", price: "142.10", vwap: "136.50", sup: "138.00", res: "146.00", type: "bull", y: 115 },
-  { name: "TCS", sec: "IT", pct: "+3.92%", price: "4,120.00", vwap: "4,070.00", sup: "4,050.00", res: "4,160.00", type: "bull", y: 155 },
-  { name: "AUROPHARMA", sec: "PHARMA", pct: "+2.85%", price: "1,245.00", vwap: "1,228.00", sup: "1,220.00", res: "1,260.00", type: "bull", y: 195 },
-  { name: "FEDERALBNK", sec: "FINANCE", pct: "+2.11%", price: "192.50", vwap: "189.20", sup: "188.00", res: "195.00", type: "bull", y: 235 },
-  { name: "TATAMOTORS", sec: "AUTO", pct: "+1.95%", price: "965.00", vwap: "958.00", sup: "950.00", res: "978.00", type: "bull", y: 275 },
-  { name: "ANANDRATHI", sec: "FINANCE", pct: "-4.68%", price: "2,038.20", vwap: "2,090.00", sup: "2,010.00", res: "2,080.00", type: "bear", y: 560 },
-  { name: "MPHASIS", sec: "IT", pct: "-2.14%", price: "2,610.00", vwap: "2,650.00", sup: "2,580.00", res: "2,640.00", type: "bear", y: 600 },
-  { name: "COFORGE", sec: "IT", pct: "-1.85%", price: "7,450.00", vwap: "7,520.00", sup: "7,380.00", res: "7,510.00", type: "bear", y: 640 }
+  { id: "c1", name: "EICHERMOT", sec: "AUTO", pct: 4.17, price: 7058.00, vwap: "7,015.20", sup: "7,001.00", res: "7,088.00", type: "bull", y: 35 },
+  { id: "c2", name: "TVSMOTOR", sec: "AUTO", pct: 2.48, price: 2480.00, vwap: "2,460.00", sup: "2,450.00", res: "2,510.00", type: "bull", y: 78 },
+  { id: "c3", name: "INOXWIND", sec: "ENERGY", pct: 6.76, price: 142.10, vwap: "136.50", sup: "138.00", res: "146.00", type: "bull", y: 121 },
+  { id: "c4", name: "TCS", sec: "IT", pct: 3.92, price: 4120.00, vwap: "4,070.00", sup: "4,050.00", res: "4,160.00", type: "bull", y: 164 },
+  { id: "c5", name: "AUROPHARMA", sec: "PHARMA", pct: 2.85, price: 1245.00, vwap: "1,228.00", sup: "1,220.00", res: "1,260.00", type: "bull", y: 207 },
+  { id: "c6", name: "FEDERALBNK", sec: "FINANCE", pct: 2.11, price: 192.50, vwap: "189.20", sup: "188.00", res: "195.00", type: "bull", y: 250 },
+  { id: "c7", name: "TATAMOTORS", sec: "AUTO", pct: 1.95, price: 965.00, vwap: "958.00", sup: "950.00", res: "978.00", type: "bull", y: 293 },
+  // Bearish bottom cards
+  { id: "c8", name: "ANANDRATHI", sec: "FINANCE", pct: -4.68, price: 2038.20, vwap: "2,090.00", sup: "2,010.00", res: "2,080.00", type: "bear", y: 550 },
+  { id: "c9", name: "MPHASIS", sec: "IT", pct: -2.14, price: 2610.00, vwap: "2,650.00", sup: "2,580.00", res: "2,640.00", type: "bear", y: 593 },
+  { id: "c10", name: "COFORGE", sec: "IT", pct: -1.85, price: 7450.00, vwap: "7,520.00", sup: "7,380.00", res: "7,510.00", type: "bear", y: 636 }
 ];
 
+// Build Sectors DOM
 const secContainer = document.getElementById("sectorContainer");
 sectors.forEach(s => {
   const div = document.createElement("div");
   div.className = "sec-row";
+  div.id = `sec-el-${s.id}`;
   const color = s.type === "bull" ? "#059669" : "#dc2626";
+  const sign = s.pct >= 0 ? "+" : "";
   div.innerHTML = `
     <span style="color:#334155;">${s.name}</span>
     <div class="bar-wrap">
-      <div class="bar-fill" style="width:${s.val}%; background:${color};"></div>
+      <div class="bar-fill" id="bar-${s.id}" style="width:${s.val}%; background:${color};"></div>
     </div>
-    <span style="color:${color};">${s.pct}</span>
+    <span style="color:${color};" id="pct-${s.id}">${sign}${s.pct.toFixed(2)}%</span>
   `;
   secContainer.appendChild(div);
 });
 
-const stockContainer = document.getElementById("stockContainer");
+// Build Stock Cards DOM (Positioned directly at absolute left 1050px)
+const cardsLayer = document.getElementById("cardsLayer");
 topStocks.forEach(stk => {
   const card = document.createElement("div");
   card.className = "stock-pill " + stk.type;
+  card.id = `card-el-${stk.id}`;
   card.style.top = stk.y + "px";
   card.onclick = () => openModal(stk);
   const color = stk.type === "bull" ? "#059669" : "#dc2626";
+  const sign = stk.pct >= 0 ? "+" : "";
   card.innerHTML = `
     <div>
       <div style="font-weight:700; color:#0f172a;">${stk.name}</div>
-      <div style="font-size:9.5px; color:#64748b;">₹${stk.price} • ${stk.sec}</div>
+      <div style="font-size:9.5px; color:#64748b;" id="price-${stk.id}">₹${stk.price.toLocaleString('en-IN', {minimumFractionDigits: 2})} • ${stk.sec}</div>
     </div>
     <div style="text-align:right;">
-      <div style="font-weight:700; color:${color};">${stk.pct}</div>
+      <div style="font-weight:700; color:${color};" id="pct-${stk.id}">${sign}${stk.pct.toFixed(2)}%</div>
       <div style="font-size:8.5px; color:${color}; font-weight:600;">${stk.type === 'bull' ? 'BUY BLOCK' : 'SELL BLOCK'}</div>
     </div>
   `;
-  stockContainer.appendChild(card);
+  cardsLayer.appendChild(card);
 });
 
+// --- CANVAS ENGINE ---
 const canvas = document.getElementById("flowCanvas");
 const ctx = canvas.getContext("2d");
 
 const ladderX = 820;
 const boxWidth = 150;
-const boxRight = ladderX + boxWidth;
-const cardTargetX = 1060;
+const boxRight = ladderX + boxWidth; // 970px
+const cardSnapX = 1050; // Exact left border of stock cards!
 
 const inTracks = [];
 const outTracks = [];
 
+// 1. Inflow: 200+ Waterfall curves
 for (let i = 0; i < 200; i++) {
   const isBull = i < 172;
   if (isBull) {
@@ -331,16 +318,18 @@ for (let i = 0; i < 200; i++) {
   }
 }
 
-topStocks.forEach(stk => {
-  const count = stk.type === "bull" ? 3 : 2;
+// 2. Right Outflow: EVERY SINGLE CARD gets 3 accurately snapped lines touching cardSnapX
+topStocks.forEach((stk) => {
+  const count = 3;
+  // Card height is 30px, so exact middle connection point is stk.y + 15
+  const destY = stk.y + 15;
   for (let k = 0; k < count; k++) {
     const srcY = stk.type === "bull" ? (35 + Math.random() * 320) : (555 + Math.random() * 120);
-    const destY = stk.y + 14;
     outTracks.push({
       p0: [boxRight, srcY],
-      p1: [boxRight + 35, srcY],
-      p2: [cardTargetX - 30, destY],
-      p3: [cardTargetX, destY],
+      p1: [boxRight + 30, srcY],
+      p2: [cardSnapX - 30, destY],
+      p3: [cardSnapX, destY], // Snaps right into the card border!
       type: stk.type,
       width: 0.8
     });
@@ -385,6 +374,7 @@ for (let i = 0; i < 90; i++) {
 function render() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+  // Top Breadth Scatter Meter
   ctx.fillStyle = "rgba(203, 213, 225, 0.4)";
   ctx.fillRect(400, 16, 470, 2);
   topDots.forEach(d => {
@@ -394,8 +384,8 @@ function render() {
     ctx.fill();
   });
 
-  const blueLevels = [120, 280, 480, 640];
-  blueLevels.forEach(lvl => {
+  // Reference Levels
+  [120, 280, 480, 640].forEach(lvl => {
     ctx.beginPath();
     ctx.moveTo(200, lvl);
     ctx.lineTo(ladderX + boxWidth, lvl);
@@ -404,6 +394,7 @@ function render() {
     ctx.stroke();
   });
 
+  // Inflow Tracks
   inTracks.forEach(tr => {
     ctx.beginPath();
     ctx.moveTo(tr.p0[0], tr.p0[1]);
@@ -413,6 +404,7 @@ function render() {
     ctx.stroke();
   });
 
+  // Outflow Tracks (Fully connected to cards)
   outTracks.forEach(tr => {
     ctx.beginPath();
     ctx.moveTo(tr.p0[0], tr.p0[1]);
@@ -422,6 +414,7 @@ function render() {
     ctx.stroke();
   });
 
+  // Inflow Pulses
   inPulses.forEach(pt => {
     pt.t += pt.speed;
     if (pt.t > 1) pt.t = 0;
@@ -442,6 +435,7 @@ function render() {
     ctx.stroke();
   });
 
+  // Outflow Pulses
   outPulses.forEach(pt => {
     pt.t += pt.speed;
     if (pt.t > 1) pt.t = 0;
@@ -462,6 +456,7 @@ function render() {
     ctx.stroke();
   });
 
+  // Ladder Ticks
   for (let i = 0; i < 90; i++) {
     const isBull = i < 68;
     const y = 30 + i * 7.5;
@@ -474,15 +469,16 @@ function render() {
     ctx.stroke();
   }
 
+  // Choda Scanner Box
   const boxTop = 28;
   const boxHeight = 340;
-  
   ctx.fillStyle = "rgba(5, 150, 105, 0.08)";
   ctx.fillRect(ladderX, boxTop, boxWidth, boxHeight);
   ctx.strokeStyle = "#059669";
   ctx.lineWidth = 1.8;
   ctx.strokeRect(ladderX, boxTop, boxWidth, boxHeight);
 
+  // Corner Handles
   const arm = 14;
   ctx.lineWidth = 3.5;
   ctx.strokeStyle = "#059669";
@@ -511,27 +507,77 @@ function render() {
   ctx.lineTo(boxRight + 2, boxTop + boxHeight - arm);
   ctx.stroke();
 
+  // Bearish Box
   ctx.strokeStyle = "#dc2626";
   ctx.lineWidth = 1.8;
   ctx.fillStyle = "rgba(220, 38, 38, 0.06)";
-  ctx.fillRect(ladderX, 550, boxWidth, 160);
-  ctx.strokeRect(ladderX, 550, boxWidth, 160);
+  ctx.fillRect(ladderX, 540, boxWidth, 140);
+  ctx.strokeRect(ladderX, 540, boxWidth, 140);
 
   requestAnimationFrame(render);
 }
-
 requestAnimationFrame(render);
 
+// --- REAL-TIME LIVE MARKET TICKING SIMULATION ENGINE ---
+let currentBull = 172;
+let currentBear = 41;
+
+setInterval(() => {
+  // 1. Fluctuate Bullish & Bearish market breath counts live
+  const delta = Math.floor(Math.random() * 5) - 2; // -2, -1, 0, 1, 2
+  currentBull = Math.min(Math.max(145, currentBull + delta), 185);
+  currentBear = 213 - currentBull; // Total tracked universe = 213 stocks
+
+  const bEl = document.getElementById("bullCounter");
+  const rEl = document.getElementById("bearCounter");
+  bEl.innerText = currentBull;
+  rEl.innerText = currentBear;
+
+  // 2. Random stock tick update
+  const randomStk = topStocks[Math.floor(Math.random() * topStocks.length)];
+  const pctDelta = (Math.random() * 0.16 - 0.08);
+  randomStk.pct += pctDelta;
+  randomStk.price += (randomStk.price * (pctDelta / 100));
+
+  const cardEl = document.getElementById(`card-el-${randomStk.id}`);
+  const priceEl = document.getElementById(`price-${randomStk.id}`);
+  const pctEl = document.getElementById(`pct-${randomStk.id}`);
+
+  if (priceEl && pctEl) {
+    const sign = randomStk.pct >= 0 ? "+" : "";
+    priceEl.innerText = `₹${randomStk.price.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})} • ${randomStk.sec}`;
+    pctEl.innerText = `${sign}${randomStk.pct.toFixed(2)}%`;
+
+    // Flash background
+    cardEl.classList.add(pctDelta >= 0 ? "flash-green" : "flash-red");
+    setTimeout(() => {
+      cardEl.classList.remove("flash-green", "flash-red");
+    }, 400);
+  }
+
+  // 3. Scatter top dots subtle jitter
+  topDots.forEach(d => {
+    if (Math.random() > 0.6) {
+      d.x += (Math.random() * 4 - 2);
+    }
+  });
+}, 3200);
+
+// Modal Helpers
 function openModal(stk) {
   document.getElementById("mStock").innerText = stk.name;
   document.getElementById("mSector").innerText = stk.sec + " SECTOR";
-  document.getElementById("mPrice").innerText = "₹" + stk.price;
+  document.getElementById("mPrice").innerText = "₹" + stk.price.toLocaleString('en-IN', {minimumFractionDigits: 2});
   const p = document.getElementById("mPct");
-  p.innerText = stk.pct;
+  const sign = stk.pct >= 0 ? "+" : "";
+  p.innerText = `${sign}${stk.pct.toFixed(2)}%`;
   p.style.color = stk.type === "bull" ? "#059669" : "#dc2626";
   document.getElementById("mVwap").innerText = stk.vwap;
   document.getElementById("mSup").innerText = stk.sup;
   document.getElementById("mRes").innerText = stk.res;
+  document.getElementById("mOi").innerText = stk.type === "bull" ? "+18.4%" : "-14.2%";
+  document.getElementById("mBias").innerText = stk.type === "bull" ? "BULLISH" : "BEARISH";
+  document.getElementById("mBias").style.color = stk.type === "bull" ? "#059669" : "#dc2626";
   document.getElementById("modalBackdrop").style.display = "flex";
 }
 function closeModal() {
