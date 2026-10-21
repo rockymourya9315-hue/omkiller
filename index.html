@@ -2,25 +2,29 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
-  body { background-color: #f3f6f8; color: #1c252c; overflow: auto; user-select: none; touch-action: none; }
+  html, body {
+    background-color: #f3f6f8; color: #1c252c;
+    width: 100%; height: 100%; overflow: hidden;
+    user-select: none; touch-action: none;
+  }
 
   .top-navbar {
-    position: sticky; top: 0; z-index: 100;
+    position: relative; z-index: 100; height: 42px;
     display: flex; justify-content: space-between; align-items: center;
-    padding: 8px 16px; background: #ffffff; border-bottom: 1px solid #dce2e6;
+    padding: 0 16px; background: #ffffff; border-bottom: 1px solid #dce2e6;
   }
   .brand { font-size: 13px; font-weight: 700; color: #1e293b; letter-spacing: 0.5px; }
   .stats-counter {
     display: flex; gap: 14px; font-size: 11px; font-weight: 700;
     background: #f8fafc; padding: 4px 12px; border-radius: 4px; border: 1px solid #e2e8f0;
   }
-  .bull-count { color: #059669; transition: color 0.3s; }
-  .bear-count { color: #dc2626; transition: color 0.3s; }
+  .bull-count { color: #059669; }
+  .bear-count { color: #dc2626; }
 
-  /* Zoom Controller */
+  /* Floating Zoom HUD */
   .zoom-controls {
     position: fixed; bottom: 20px; right: 20px; z-index: 900;
     display: flex; flex-direction: column; gap: 8px;
@@ -33,32 +37,33 @@
   }
   .zoom-btn:active { background: #e2e8f0; }
 
+  /* Stable Pan / Zoom Wrapper */
   #pan-wrapper {
-    position: relative; width: 100vw; height: calc(100vh - 45px);
+    position: relative; width: 100vw; height: calc(100vh - 42px);
     overflow: hidden; touch-action: none;
   }
   #zoom-layer {
-    position: absolute; left: 0; top: 0; width: 1300px; height: 780px;
+    position: absolute; left: 0; top: 0; width: 1300px; height: 760px;
     transform-origin: 0 0; will-change: transform;
   }
 
-  #viewport { position: relative; width: 1300px; height: 780px; background: #f3f6f8; }
-  #flowCanvas { position: absolute; left: 0; top: 0; width: 1300px; height: 780px; z-index: 1; pointer-events: none; }
+  #viewport { position: relative; width: 1300px; height: 760px; background: #f3f6f8; }
+  #flowCanvas { position: absolute; left: 0; top: 0; width: 1300px; height: 760px; z-index: 1; pointer-events: none; }
 
-  /* Left Sector List */
+  /* Left Sector List Overlay */
   .sector-overlay {
-    position: absolute; left: 16px; top: 60px; width: 180px; z-index: 3;
+    position: absolute; left: 16px; top: 50px; width: 180px; z-index: 3;
     display: flex; flex-direction: column; gap: 4px; pointer-events: auto;
   }
   .sec-row {
     display: flex; justify-content: space-between; align-items: center;
-    background: rgba(255, 255, 255, 0.92); border: 1px solid #d1d5db; border-radius: 3px;
+    background: rgba(255, 255, 255, 0.94); border: 1px solid #d1d5db; border-radius: 3px;
     padding: 2px 6px; font-size: 10px; font-weight: 600; height: 22px; backdrop-filter: blur(2px);
   }
   .sec-row .bar-wrap { width: 45px; height: 4px; background: #e2e8f0; border-radius: 2px; overflow: hidden; margin: 0 4px; }
   .sec-row .bar-fill { height: 100%; border-radius: 2px; }
 
-  /* Right Stock Pills - Absolute placement matching canvas endpoints exactly */
+  /* Right Stock Pills */
   .stock-pill {
     position: absolute; left: 1050px; width: 225px; height: 30px;
     background: #ffffff; border-left: 4px solid #059669; border-radius: 4px;
@@ -71,7 +76,7 @@
   .flash-green { background-color: #ecfdf5 !important; }
   .flash-red { background-color: #fef2f2 !important; }
 
-  /* Modal */
+  /* Modal Details */
   .modal-backdrop {
     display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6);
     z-index: 999; justify-content: center; align-items: center; backdrop-filter: blur(3px);
@@ -110,7 +115,7 @@
 <div id="pan-wrapper">
   <div id="zoom-layer">
     <div id="viewport">
-      <canvas id="flowCanvas" width="1300" height="780"></canvas>
+      <canvas id="flowCanvas" width="1300" height="760"></canvas>
       <div class="sector-overlay" id="sectorContainer"></div>
       <div id="cardsLayer"></div>
     </div>
@@ -142,23 +147,23 @@
 </div>
 
 <script>
-// --- PINCH / ZOOM / PAN ---
-let scale = 0.85;
-let panX = 0, panY = 0;
+// --- SMOOTH PAN / ZOOM ENGINE (Zero Page Jitter) ---
+let scale = 0.82;
+let panX = 10, panY = 10;
 let isPanning = false, startX = 0, startY = 0;
-let initialDistance = 0, initialScale = 0.85;
+let initialDistance = 0, initialScale = 0.82;
 
 const zoomLayer = document.getElementById("zoom-layer");
 const panWrapper = document.getElementById("pan-wrapper");
 
 function updateTransform() {
-  scale = Math.min(Math.max(0.4, scale), 3.0);
+  scale = Math.min(Math.max(0.4, scale), 2.5);
   zoomLayer.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
 }
 updateTransform();
 
 function applyZoom(delta) { scale += delta; updateTransform(); }
-function resetZoom() { scale = 0.85; panX = 0; panY = 0; updateTransform(); }
+function resetZoom() { scale = 0.82; panX = 10; panY = 10; updateTransform(); }
 
 panWrapper.addEventListener('touchstart', (e) => {
   if (e.touches.length === 1) {
@@ -176,26 +181,25 @@ panWrapper.addEventListener('touchstart', (e) => {
 }, { passive: false });
 
 panWrapper.addEventListener('touchmove', (e) => {
+  e.preventDefault(); // Stop entire page from wobbling up and down
   if (e.touches.length === 1 && isPanning) {
     panX = e.touches[0].clientX - startX;
     panY = e.touches[0].clientY - startY;
     updateTransform();
-  } else if (e.touches.length === 2) {
+  } else if (e.touches.length === 2 && initialDistance > 0) {
     const dist = Math.hypot(
       e.touches[0].clientX - e.touches[1].clientX,
       e.touches[0].clientY - e.touches[1].clientY
     );
-    if (initialDistance > 0) {
-      scale = initialScale * (dist / initialDistance);
-      updateTransform();
-    }
+    scale = initialScale * (dist / initialDistance);
+    updateTransform();
   }
 }, { passive: false });
 
 panWrapper.addEventListener('touchend', () => { isPanning = false; initialDistance = 0; });
 panWrapper.addEventListener('wheel', (e) => { e.preventDefault(); scale += e.deltaY * -0.001; updateTransform(); }, { passive: false });
 
-// --- DATA ---
+// --- DATA DEFINITIONS ---
 const sectors = [
   { id: "s1", name: "IT", pct: 2.87, type: "bull", val: 85 },
   { id: "s2", name: "LOGISTICS", pct: 2.41, type: "bull", val: 80 },
@@ -218,371 +222,9 @@ const sectors = [
   { id: "s19", name: "CONSUMER", pct: 0.71, type: "bull", val: 24 },
   { id: "s20", name: "CAP MKTS", pct: 0.52, type: "bull", val: 18 },
   { id: "s21", name: "OIL & GAS", pct: 0.01, type: "bull", val: 8 },
+  // Bearish sectors located strictly at the bottom
   { id: "s22", name: "MEDIA", pct: -0.64, type: "bear", val: 25 },
   { id: "s23", name: "ENERGY", pct: -1.12, type: "bear", val: 40 }
 ];
 
-// Exact vertical positions for cards (Viewport coordinates)
-const topStocks = [
-  { id: "c1", name: "EICHERMOT", sec: "AUTO", pct: 4.17, price: 7058.00, vwap: "7,015.20", sup: "7,001.00", res: "7,088.00", type: "bull", y: 35 },
-  { id: "c2", name: "TVSMOTOR", sec: "AUTO", pct: 2.48, price: 2480.00, vwap: "2,460.00", sup: "2,450.00", res: "2,510.00", type: "bull", y: 78 },
-  { id: "c3", name: "INOXWIND", sec: "ENERGY", pct: 6.76, price: 142.10, vwap: "136.50", sup: "138.00", res: "146.00", type: "bull", y: 121 },
-  { id: "c4", name: "TCS", sec: "IT", pct: 3.92, price: 4120.00, vwap: "4,070.00", sup: "4,050.00", res: "4,160.00", type: "bull", y: 164 },
-  { id: "c5", name: "AUROPHARMA", sec: "PHARMA", pct: 2.85, price: 1245.00, vwap: "1,228.00", sup: "1,220.00", res: "1,260.00", type: "bull", y: 207 },
-  { id: "c6", name: "FEDERALBNK", sec: "FINANCE", pct: 2.11, price: 192.50, vwap: "189.20", sup: "188.00", res: "195.00", type: "bull", y: 250 },
-  { id: "c7", name: "TATAMOTORS", sec: "AUTO", pct: 1.95, price: 965.00, vwap: "958.00", sup: "950.00", res: "978.00", type: "bull", y: 293 },
-  // Bearish bottom cards
-  { id: "c8", name: "ANANDRATHI", sec: "FINANCE", pct: -4.68, price: 2038.20, vwap: "2,090.00", sup: "2,010.00", res: "2,080.00", type: "bear", y: 550 },
-  { id: "c9", name: "MPHASIS", sec: "IT", pct: -2.14, price: 2610.00, vwap: "2,650.00", sup: "2,580.00", res: "2,640.00", type: "bear", y: 593 },
-  { id: "c10", name: "COFORGE", sec: "IT", pct: -1.85, price: 7450.00, vwap: "7,520.00", sup: "7,380.00", res: "7,510.00", type: "bear", y: 636 }
-];
-
-// Build Sectors DOM
-const secContainer = document.getElementById("sectorContainer");
-sectors.forEach(s => {
-  const div = document.createElement("div");
-  div.className = "sec-row";
-  div.id = `sec-el-${s.id}`;
-  const color = s.type === "bull" ? "#059669" : "#dc2626";
-  const sign = s.pct >= 0 ? "+" : "";
-  div.innerHTML = `
-    <span style="color:#334155;">${s.name}</span>
-    <div class="bar-wrap">
-      <div class="bar-fill" id="bar-${s.id}" style="width:${s.val}%; background:${color};"></div>
-    </div>
-    <span style="color:${color};" id="pct-${s.id}">${sign}${s.pct.toFixed(2)}%</span>
-  `;
-  secContainer.appendChild(div);
-});
-
-// Build Stock Cards DOM (Positioned directly at absolute left 1050px)
-const cardsLayer = document.getElementById("cardsLayer");
-topStocks.forEach(stk => {
-  const card = document.createElement("div");
-  card.className = "stock-pill " + stk.type;
-  card.id = `card-el-${stk.id}`;
-  card.style.top = stk.y + "px";
-  card.onclick = () => openModal(stk);
-  const color = stk.type === "bull" ? "#059669" : "#dc2626";
-  const sign = stk.pct >= 0 ? "+" : "";
-  card.innerHTML = `
-    <div>
-      <div style="font-weight:700; color:#0f172a;">${stk.name}</div>
-      <div style="font-size:9.5px; color:#64748b;" id="price-${stk.id}">₹${stk.price.toLocaleString('en-IN', {minimumFractionDigits: 2})} • ${stk.sec}</div>
-    </div>
-    <div style="text-align:right;">
-      <div style="font-weight:700; color:${color};" id="pct-${stk.id}">${sign}${stk.pct.toFixed(2)}%</div>
-      <div style="font-size:8.5px; color:${color}; font-weight:600;">${stk.type === 'bull' ? 'BUY BLOCK' : 'SELL BLOCK'}</div>
-    </div>
-  `;
-  cardsLayer.appendChild(card);
-});
-
-// --- CANVAS ENGINE ---
-const canvas = document.getElementById("flowCanvas");
-const ctx = canvas.getContext("2d");
-
-const ladderX = 820;
-const boxWidth = 150;
-const boxRight = ladderX + boxWidth; // 970px
-const cardSnapX = 1050; // Exact left border of stock cards!
-
-const inTracks = [];
-const outTracks = [];
-
-// 1. Inflow: 200+ Waterfall curves
-for (let i = 0; i < 200; i++) {
-  const isBull = i < 172;
-  if (isBull) {
-    const startY = 70 + Math.random() * 630;
-    const targetY = 32 + Math.pow(Math.random(), 1.5) * 350;
-    inTracks.push({
-      p0: [200, startY],
-      p1: [320 + Math.random() * 80, startY + (targetY - startY) * 0.1],
-      p2: [540 + Math.random() * 100, targetY + 15],
-      p3: [ladderX, targetY],
-      type: "bull",
-      width: Math.random() * 0.5 + 0.5
-    });
-  } else {
-    const startY = 560 + Math.random() * 150;
-    const targetY = 560 + Math.random() * 150;
-    inTracks.push({
-      p0: [200, startY],
-      p1: [380, startY],
-      p2: [620, targetY],
-      p3: [ladderX, targetY],
-      type: "bear",
-      width: 0.5
-    });
-  }
-}
-
-// 2. Right Outflow: EVERY SINGLE CARD gets 3 accurately snapped lines touching cardSnapX
-topStocks.forEach((stk) => {
-  const count = 3;
-  // Card height is 30px, so exact middle connection point is stk.y + 15
-  const destY = stk.y + 15;
-  for (let k = 0; k < count; k++) {
-    const srcY = stk.type === "bull" ? (35 + Math.random() * 320) : (555 + Math.random() * 120);
-    outTracks.push({
-      p0: [boxRight, srcY],
-      p1: [boxRight + 30, srcY],
-      p2: [cardSnapX - 30, destY],
-      p3: [cardSnapX, destY], // Snaps right into the card border!
-      type: stk.type,
-      width: 0.8
-    });
-  }
-});
-
-const inPulses = inTracks.map((tr, idx) => ({
-  trackIndex: idx,
-  t: Math.random(),
-  speed: 0.003 + Math.random() * 0.0025,
-  len: 0.12 + Math.random() * 0.08
-}));
-
-const outPulses = outTracks.map((tr, idx) => ({
-  trackIndex: idx,
-  t: Math.random(),
-  speed: 0.0035 + Math.random() * 0.002,
-  len: 0.18 + Math.random() * 0.06
-}));
-
-function getPoint(p0, p1, p2, p3, t) {
-  const u = 1 - t;
-  const tt = t * t;
-  const uu = u * u;
-  const uuu = uu * u;
-  const ttt = tt * t;
-  return [
-    uuu * p0[0] + 3 * uu * t * p1[0] + 3 * u * tt * p2[0] + ttt * p3[0],
-    uuu * p0[1] + 3 * uu * t * p1[1] + 3 * u * tt * p2[1] + ttt * p3[1]
-  ];
-}
-
-const topDots = [];
-for (let i = 0; i < 90; i++) {
-  topDots.push({
-    x: 420 + Math.random() * 440,
-    y: 18 + (Math.random() * 16 - 8),
-    type: Math.random() > 0.25 ? "bull" : "bear"
-  });
-}
-
-function render() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // Top Breadth Scatter Meter
-  ctx.fillStyle = "rgba(203, 213, 225, 0.4)";
-  ctx.fillRect(400, 16, 470, 2);
-  topDots.forEach(d => {
-    ctx.beginPath();
-    ctx.arc(d.x, d.y + (d.type === 'bull' ? -3 : 5), 1.8, 0, Math.PI * 2);
-    ctx.fillStyle = d.type === 'bull' ? "rgba(5, 150, 105, 0.7)" : "rgba(220, 38, 38, 0.7)";
-    ctx.fill();
-  });
-
-  // Reference Levels
-  [120, 280, 480, 640].forEach(lvl => {
-    ctx.beginPath();
-    ctx.moveTo(200, lvl);
-    ctx.lineTo(ladderX + boxWidth, lvl);
-    ctx.strokeStyle = "rgba(59, 130, 246, 0.35)";
-    ctx.lineWidth = 1;
-    ctx.stroke();
-  });
-
-  // Inflow Tracks
-  inTracks.forEach(tr => {
-    ctx.beginPath();
-    ctx.moveTo(tr.p0[0], tr.p0[1]);
-    ctx.bezierCurveTo(tr.p1[0], tr.p1[1], tr.p2[0], tr.p2[1], tr.p3[0], tr.p3[1]);
-    ctx.strokeStyle = tr.type === "bull" ? "rgba(5, 150, 105, 0.22)" : "rgba(220, 38, 38, 0.20)";
-    ctx.lineWidth = tr.width;
-    ctx.stroke();
-  });
-
-  // Outflow Tracks (Fully connected to cards)
-  outTracks.forEach(tr => {
-    ctx.beginPath();
-    ctx.moveTo(tr.p0[0], tr.p0[1]);
-    ctx.bezierCurveTo(tr.p1[0], tr.p1[1], tr.p2[0], tr.p2[1], tr.p3[0], tr.p3[1]);
-    ctx.strokeStyle = tr.type === "bull" ? "rgba(5, 150, 105, 0.35)" : "rgba(220, 38, 38, 0.32)";
-    ctx.lineWidth = tr.width;
-    ctx.stroke();
-  });
-
-  // Inflow Pulses
-  inPulses.forEach(pt => {
-    pt.t += pt.speed;
-    if (pt.t > 1) pt.t = 0;
-
-    const tr = inTracks[pt.trackIndex];
-    const head = getPoint(tr.p0, tr.p1, tr.p2, tr.p3, pt.t);
-    const tail = getPoint(tr.p0, tr.p1, tr.p2, tr.p3, Math.max(0, pt.t - pt.len));
-
-    const grad = ctx.createLinearGradient(tail[0], tail[1], head[0], head[1]);
-    grad.addColorStop(0, tr.type === "bull" ? "rgba(5, 150, 105, 0)" : "rgba(220, 38, 38, 0)");
-    grad.addColorStop(1, tr.type === "bull" ? "rgba(16, 185, 129, 0.95)" : "rgba(239, 68, 68, 0.95)");
-
-    ctx.beginPath();
-    ctx.moveTo(tail[0], tail[1]);
-    ctx.lineTo(head[0], head[1]);
-    ctx.strokeStyle = grad;
-    ctx.lineWidth = tr.width + 0.6;
-    ctx.stroke();
-  });
-
-  // Outflow Pulses
-  outPulses.forEach(pt => {
-    pt.t += pt.speed;
-    if (pt.t > 1) pt.t = 0;
-
-    const tr = outTracks[pt.trackIndex];
-    const head = getPoint(tr.p0, tr.p1, tr.p2, tr.p3, pt.t);
-    const tail = getPoint(tr.p0, tr.p1, tr.p2, tr.p3, Math.max(0, pt.t - pt.len));
-
-    const grad = ctx.createLinearGradient(tail[0], tail[1], head[0], head[1]);
-    grad.addColorStop(0, tr.type === "bull" ? "rgba(5, 150, 105, 0)" : "rgba(220, 38, 38, 0)");
-    grad.addColorStop(1, tr.type === "bull" ? "rgba(5, 150, 105, 1)" : "rgba(220, 38, 38, 1)");
-
-    ctx.beginPath();
-    ctx.moveTo(tail[0], tail[1]);
-    ctx.lineTo(head[0], head[1]);
-    ctx.strokeStyle = grad;
-    ctx.lineWidth = 1.3;
-    ctx.stroke();
-  });
-
-  // Ladder Ticks
-  for (let i = 0; i < 90; i++) {
-    const isBull = i < 68;
-    const y = 30 + i * 7.5;
-    const tickLen = 60 + Math.sin(i * 1.5) * 50;
-    ctx.beginPath();
-    ctx.moveTo(ladderX, y);
-    ctx.lineTo(ladderX + tickLen, y);
-    ctx.strokeStyle = isBull ? "rgba(5, 150, 105, 0.45)" : "rgba(220, 38, 38, 0.40)";
-    ctx.lineWidth = 1.2;
-    ctx.stroke();
-  }
-
-  // Choda Scanner Box
-  const boxTop = 28;
-  const boxHeight = 340;
-  ctx.fillStyle = "rgba(5, 150, 105, 0.08)";
-  ctx.fillRect(ladderX, boxTop, boxWidth, boxHeight);
-  ctx.strokeStyle = "#059669";
-  ctx.lineWidth = 1.8;
-  ctx.strokeRect(ladderX, boxTop, boxWidth, boxHeight);
-
-  // Corner Handles
-  const arm = 14;
-  ctx.lineWidth = 3.5;
-  ctx.strokeStyle = "#059669";
-  
-  ctx.beginPath();
-  ctx.moveTo(ladderX - 2, boxTop + arm);
-  ctx.lineTo(ladderX - 2, boxTop - 2);
-  ctx.lineTo(ladderX + arm, boxTop - 2);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(boxRight + 2 - arm, boxTop - 2);
-  ctx.lineTo(boxRight + 2, boxTop - 2);
-  ctx.lineTo(boxRight + 2, boxTop + arm);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(ladderX - 2, boxTop + boxHeight - arm);
-  ctx.lineTo(ladderX - 2, boxTop + boxHeight + 2);
-  ctx.lineTo(ladderX + arm, boxTop + boxHeight + 2);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(boxRight + 2 - arm, boxTop + boxHeight + 2);
-  ctx.lineTo(boxRight + 2, boxTop + boxHeight + 2);
-  ctx.lineTo(boxRight + 2, boxTop + boxHeight - arm);
-  ctx.stroke();
-
-  // Bearish Box
-  ctx.strokeStyle = "#dc2626";
-  ctx.lineWidth = 1.8;
-  ctx.fillStyle = "rgba(220, 38, 38, 0.06)";
-  ctx.fillRect(ladderX, 540, boxWidth, 140);
-  ctx.strokeRect(ladderX, 540, boxWidth, 140);
-
-  requestAnimationFrame(render);
-}
-requestAnimationFrame(render);
-
-// --- REAL-TIME LIVE MARKET TICKING SIMULATION ENGINE ---
-let currentBull = 172;
-let currentBear = 41;
-
-setInterval(() => {
-  // 1. Fluctuate Bullish & Bearish market breath counts live
-  const delta = Math.floor(Math.random() * 5) - 2; // -2, -1, 0, 1, 2
-  currentBull = Math.min(Math.max(145, currentBull + delta), 185);
-  currentBear = 213 - currentBull; // Total tracked universe = 213 stocks
-
-  const bEl = document.getElementById("bullCounter");
-  const rEl = document.getElementById("bearCounter");
-  bEl.innerText = currentBull;
-  rEl.innerText = currentBear;
-
-  // 2. Random stock tick update
-  const randomStk = topStocks[Math.floor(Math.random() * topStocks.length)];
-  const pctDelta = (Math.random() * 0.16 - 0.08);
-  randomStk.pct += pctDelta;
-  randomStk.price += (randomStk.price * (pctDelta / 100));
-
-  const cardEl = document.getElementById(`card-el-${randomStk.id}`);
-  const priceEl = document.getElementById(`price-${randomStk.id}`);
-  const pctEl = document.getElementById(`pct-${randomStk.id}`);
-
-  if (priceEl && pctEl) {
-    const sign = randomStk.pct >= 0 ? "+" : "";
-    priceEl.innerText = `₹${randomStk.price.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})} • ${randomStk.sec}`;
-    pctEl.innerText = `${sign}${randomStk.pct.toFixed(2)}%`;
-
-    // Flash background
-    cardEl.classList.add(pctDelta >= 0 ? "flash-green" : "flash-red");
-    setTimeout(() => {
-      cardEl.classList.remove("flash-green", "flash-red");
-    }, 400);
-  }
-
-  // 3. Scatter top dots subtle jitter
-  topDots.forEach(d => {
-    if (Math.random() > 0.6) {
-      d.x += (Math.random() * 4 - 2);
-    }
-  });
-}, 3200);
-
-// Modal Helpers
-function openModal(stk) {
-  document.getElementById("mStock").innerText = stk.name;
-  document.getElementById("mSector").innerText = stk.sec + " SECTOR";
-  document.getElementById("mPrice").innerText = "₹" + stk.price.toLocaleString('en-IN', {minimumFractionDigits: 2});
-  const p = document.getElementById("mPct");
-  const sign = stk.pct >= 0 ? "+" : "";
-  p.innerText = `${sign}${stk.pct.toFixed(2)}%`;
-  p.style.color = stk.type === "bull" ? "#059669" : "#dc2626";
-  document.getElementById("mVwap").innerText = stk.vwap;
-  document.getElementById("mSup").innerText = stk.sup;
-  document.getElementById("mRes").innerText = stk.res;
-  document.getElementById("mOi").innerText = stk.type === "bull" ? "+18.4%" : "-14.2%";
-  document.getElementById("mBias").innerText = stk.type === "bull" ? "BULLISH" : "BEARISH";
-  document.getElementById("mBias").style.color = stk.type === "bull" ? "#059669" : "#dc2626";
-  document.getElementById("modalBackdrop").style.display = "flex";
-}
-function closeModal() {
-  document.getElementById("modalBackdrop").style.display = "none";
-}
-</script>
-</body>
-</html>
+const topStocks
