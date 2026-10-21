@@ -11,8 +11,9 @@
     user-select: none; touch-action: none;
   }
 
+  /* Top Navbar */
   .top-navbar {
-    position: relative; z-index: 100; height: 42px;
+    position: relative; z-index: 100; height: 44px;
     display: flex; justify-content: space-between; align-items: center;
     padding: 0 16px; background: #ffffff; border-bottom: 1px solid #dce2e6;
   }
@@ -37,9 +38,9 @@
   }
   .zoom-btn:active { background: #e2e8f0; }
 
-  /* Stable Pan / Zoom Wrapper */
+  /* Pan / Zoom Viewport */
   #pan-wrapper {
-    position: relative; width: 100vw; height: calc(100vh - 42px);
+    position: relative; width: 100vw; height: calc(100vh - 44px);
     overflow: hidden; touch-action: none;
   }
   #zoom-layer {
@@ -76,7 +77,7 @@
   .flash-green { background-color: #ecfdf5 !important; }
   .flash-red { background-color: #fef2f2 !important; }
 
-  /* Modal Details */
+  /* Popup Modal */
   .modal-backdrop {
     display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6);
     z-index: 999; justify-content: center; align-items: center; backdrop-filter: blur(3px);
@@ -147,25 +148,25 @@
 </div>
 
 <script>
-// --- SMOOTH PAN / ZOOM ENGINE (Zero Page Jitter) ---
-let scale = 0.82;
-let panX = 10, panY = 10;
-let isPanning = false, startX = 0, startY = 0;
-let initialDistance = 0, initialScale = 0.82;
+// --- SMOOTH PAN / ZOOM ENGINE ---
+var scale = 0.82;
+var panX = 10, panY = 10;
+var isPanning = false, startX = 0, startY = 0;
+var initialDistance = 0, initialScale = 0.82;
 
-const zoomLayer = document.getElementById("zoom-layer");
-const panWrapper = document.getElementById("pan-wrapper");
+var zoomLayer = document.getElementById("zoom-layer");
+var panWrapper = document.getElementById("pan-wrapper");
 
 function updateTransform() {
   scale = Math.min(Math.max(0.4, scale), 2.5);
-  zoomLayer.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+  zoomLayer.style.transform = "translate(" + panX + "px, " + panY + "px) scale(" + scale + ")";
 }
 updateTransform();
 
 function applyZoom(delta) { scale += delta; updateTransform(); }
 function resetZoom() { scale = 0.82; panX = 10; panY = 10; updateTransform(); }
 
-panWrapper.addEventListener('touchstart', (e) => {
+panWrapper.addEventListener('touchstart', function(e) {
   if (e.touches.length === 1) {
     isPanning = true;
     startX = e.touches[0].clientX - panX;
@@ -180,14 +181,14 @@ panWrapper.addEventListener('touchstart', (e) => {
   }
 }, { passive: false });
 
-panWrapper.addEventListener('touchmove', (e) => {
-  e.preventDefault(); // Stop entire page from wobbling up and down
+panWrapper.addEventListener('touchmove', function(e) {
+  e.preventDefault(); // Prevents page from jumping or wobbling vertically
   if (e.touches.length === 1 && isPanning) {
     panX = e.touches[0].clientX - startX;
     panY = e.touches[0].clientY - startY;
     updateTransform();
   } else if (e.touches.length === 2 && initialDistance > 0) {
-    const dist = Math.hypot(
+    var dist = Math.hypot(
       e.touches[0].clientX - e.touches[1].clientX,
       e.touches[0].clientY - e.touches[1].clientY
     );
@@ -196,11 +197,11 @@ panWrapper.addEventListener('touchmove', (e) => {
   }
 }, { passive: false });
 
-panWrapper.addEventListener('touchend', () => { isPanning = false; initialDistance = 0; });
-panWrapper.addEventListener('wheel', (e) => { e.preventDefault(); scale += e.deltaY * -0.001; updateTransform(); }, { passive: false });
+panWrapper.addEventListener('touchend', function() { isPanning = false; initialDistance = 0; });
+panWrapper.addEventListener('wheel', function(e) { e.preventDefault(); scale += e.deltaY * -0.001; updateTransform(); }, { passive: false });
 
 // --- DATA DEFINITIONS ---
-const sectors = [
+var sectors = [
   { id: "s1", name: "IT", pct: 2.87, type: "bull", val: 85 },
   { id: "s2", name: "LOGISTICS", pct: 2.41, type: "bull", val: 80 },
   { id: "s3", name: "CEMENT", pct: 2.21, type: "bull", val: 76 },
@@ -222,9 +223,361 @@ const sectors = [
   { id: "s19", name: "CONSUMER", pct: 0.71, type: "bull", val: 24 },
   { id: "s20", name: "CAP MKTS", pct: 0.52, type: "bull", val: 18 },
   { id: "s21", name: "OIL & GAS", pct: 0.01, type: "bull", val: 8 },
-  // Bearish sectors located strictly at the bottom
   { id: "s22", name: "MEDIA", pct: -0.64, type: "bear", val: 25 },
   { id: "s23", name: "ENERGY", pct: -1.12, type: "bear", val: 40 }
 ];
 
-const topStocks
+var topStocks = [
+  { id: "c1", name: "EICHERMOT", sec: "AUTO", pct: 4.17, price: 7058.00, vwap: "7,015.20", sup: "7,001.00", res: "7,088.00", type: "bull", y: 35 },
+  { id: "c2", name: "TVSMOTOR", sec: "AUTO", pct: 2.48, price: 2480.00, vwap: "2,460.00", sup: "2,450.00", res: "2,510.00", type: "bull", y: 78 },
+  { id: "c3", name: "INOXWIND", sec: "ENERGY", pct: 6.76, price: 142.10, vwap: "136.50", sup: "138.00", res: "146.00", type: "bull", y: 121 },
+  { id: "c4", name: "TCS", sec: "IT", pct: 3.92, price: 4120.00, vwap: "4,070.00", sup: "4,050.00", res: "4,160.00", type: "bull", y: 164 },
+  { id: "c5", name: "AUROPHARMA", sec: "PHARMA", pct: 2.85, price: 1245.00, vwap: "1,228.00", sup: "1,220.00", res: "1,260.00", type: "bull", y: 207 },
+  { id: "c6", name: "FEDERALBNK", sec: "FINANCE", pct: 2.11, price: 192.50, vwap: "189.20", sup: "188.00", res: "195.00", type: "bull", y: 250 },
+  { id: "c7", name: "TATAMOTORS", sec: "AUTO", pct: 1.95, price: 965.00, vwap: "958.00", sup: "950.00", res: "978.00", type: "bull", y: 293 },
+  { id: "c8", name: "ANANDRATHI", sec: "FINANCE", pct: -4.68, price: 2038.20, vwap: "2,090.00", sup: "2,010.00", res: "2,080.00", type: "bear", y: 550 },
+  { id: "c9", name: "MPHASIS", sec: "IT", pct: -2.14, price: 2610.00, vwap: "2,650.00", sup: "2,580.00", res: "2,640.00", type: "bear", y: 593 },
+  { id: "c10", name: "COFORGE", sec: "IT", pct: -1.85, price: 7450.00, vwap: "7,520.00", sup: "7,380.00", res: "7,510.00", type: "bear", y: 636 }
+];
+
+var sectorStartYs = [];
+var secContainer = document.getElementById("sectorContainer");
+
+for (var i = 0; i < sectors.length; i++) {
+  var s = sectors[i];
+  var div = document.createElement("div");
+  div.className = "sec-row";
+  div.id = "sec-el-" + s.id;
+  var color = s.type === "bull" ? "#059669" : "#dc2626";
+  var sign = s.pct >= 0 ? "+" : "";
+  div.innerHTML = '<span style="color:#334155;">' + s.name + '</span>' +
+                  '<div class="bar-wrap"><div class="bar-fill" id="bar-' + s.id + '" style="width:' + s.val + '%; background:' + color + ';"></div></div>' +
+                  '<span style="color:' + color + ';" id="pct-' + s.id + '">' + sign + s.pct.toFixed(2) + '%</span>';
+  secContainer.appendChild(div);
+
+  // Exact vertical center for sector rows
+  var actualY = 50 + i * 26 + 11;
+  sectorStartYs.push({ y: actualY, type: s.type });
+}
+
+var cardsLayer = document.getElementById("cardsLayer");
+for (var j = 0; j < topStocks.length; j++) {
+  (function(stk) {
+    var card = document.createElement("div");
+    card.className = "stock-pill " + stk.type;
+    card.id = "card-el-" + stk.id;
+    card.style.top = stk.y + "px";
+    card.onclick = function() { openModal(stk); };
+    var color = stk.type === "bull" ? "#059669" : "#dc2626";
+    var sign = stk.pct >= 0 ? "+" : "";
+    card.innerHTML = '<div><div style="font-weight:700; color:#0f172a;">' + stk.name + '</div>' +
+                     '<div style="font-size:9.5px; color:#64748b;" id="price-' + stk.id + '">₹' + stk.price.toFixed(2) + ' • ' + stk.sec + '</div></div>' +
+                     '<div style="text-align:right;"><div style="font-weight:700; color:' + color + ';" id="pct-' + stk.id + '">' + sign + stk.pct.toFixed(2) + '%</div>' +
+                     '<div style="font-size:8.5px; color:' + color + '; font-weight:600;">' + (stk.type === 'bull' ? 'BUY BLOCK' : 'SELL BLOCK') + '</div></div>';
+    cardsLayer.appendChild(card);
+  })(topStocks[j]);
+}
+
+// --- CANVAS ENGINE ---
+var canvas = document.getElementById("flowCanvas");
+var ctx = canvas.getContext("2d");
+
+var ladderX = 820;
+var boxWidth = 150;
+var boxRight = ladderX + boxWidth; // 970px
+var cardSnapX = 1050;
+
+var inTracks = [];
+var outTracks = [];
+
+// 1. INFLOW: Har sector ke exact right edge (X: 196) se line niklegi
+// Bullish sectors (indices 0 to 20)
+for (var i = 0; i < 21; i++) {
+  var sec = sectorStartYs[i];
+  for (var k = 0; k < 9; k++) {
+    var targetY = 32 + Math.pow(Math.random(), 1.5) * 340;
+    inTracks.push({
+      p0: [196, sec.y],
+      p1: [320 + Math.random() * 80, sec.y + (targetY - sec.y) * 0.12],
+      p2: [540 + Math.random() * 100, targetY + 15],
+      p3: [ladderX, targetY],
+      type: "bull",
+      width: Math.random() * 0.5 + 0.5
+    });
+  }
+}
+
+// Bearish sectors (strictly Media & Energy rows)
+for (var i = 21; i < 23; i++) {
+  var sec = sectorStartYs[i];
+  for (var k = 0; k < 12; k++) {
+    var targetY = 550 + Math.random() * 125;
+    inTracks.push({
+      p0: [196, sec.y],
+      p1: [360, sec.y],
+      p2: [620, targetY],
+      p3: [ladderX, targetY],
+      type: "bear",
+      width: 0.6
+    });
+  }
+}
+
+// 2. OUTFLOW: Choda Box se nikal kar exact card left border par snap
+for (var i = 0; i < topStocks.length; i++) {
+  var stk = topStocks[i];
+  var destY = stk.y + 15; // Card center
+  for (var k = 0; k < 3; k++) {
+    var srcY = stk.type === "bull" ? (35 + Math.random() * 320) : (555 + Math.random() * 115);
+    outTracks.push({
+      p0: [boxRight, srcY],
+      p1: [boxRight + 30, srcY],
+      p2: [cardSnapX - 30, destY],
+      p3: [cardSnapX, destY],
+      type: stk.type,
+      width: 0.8
+    });
+  }
+}
+
+var inPulses = [];
+for (var i = 0; i < inTracks.length; i++) {
+  inPulses.push({ trackIndex: i, t: Math.random(), speed: 0.003 + Math.random() * 0.0025, len: 0.12 + Math.random() * 0.08 });
+}
+
+var outPulses = [];
+for (var i = 0; i < outTracks.length; i++) {
+  outPulses.push({ trackIndex: i, t: Math.random(), speed: 0.0035 + Math.random() * 0.002, len: 0.18 + Math.random() * 0.06 });
+}
+
+function getPoint(p0, p1, p2, p3, t) {
+  var u = 1 - t;
+  var tt = t * t;
+  var uu = u * u;
+  var uuu = uu * u;
+  var ttt = tt * t;
+  return [
+    uuu * p0[0] + 3 * uu * t * p1[0] + 3 * u * tt * p2[0] + ttt * p3[0],
+    uuu * p0[1] + 3 * uu * t * p1[1] + 3 * u * tt * p2[1] + ttt * p3[1]
+  ];
+}
+
+var topDots = [];
+for (var i = 0; i < 90; i++) {
+  topDots.push({
+    x: 420 + Math.random() * 440,
+    y: 18 + (Math.random() * 16 - 8),
+    type: Math.random() > 0.25 ? "bull" : "bear"
+  });
+}
+
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Top Breadth Scatter Meter
+  ctx.fillStyle = "rgba(203, 213, 225, 0.4)";
+  ctx.fillRect(400, 16, 470, 2);
+  for (var i = 0; i < topDots.length; i++) {
+    var d = topDots[i];
+    ctx.beginPath();
+    ctx.arc(d.x, d.y + (d.type === 'bull' ? -3 : 5), 1.8, 0, Math.PI * 2);
+    ctx.fillStyle = d.type === 'bull' ? "rgba(5, 150, 105, 0.7)" : "rgba(220, 38, 38, 0.7)";
+    ctx.fill();
+  }
+
+  // Reference Levels
+  var lvls = [120, 280, 480, 640];
+  for (var i = 0; i < lvls.length; i++) {
+    ctx.beginPath();
+    ctx.moveTo(196, lvls[i]);
+    ctx.lineTo(ladderX + boxWidth, lvls[i]);
+    ctx.strokeStyle = "rgba(59, 130, 246, 0.35)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Inflow Tracks
+  for (var i = 0; i < inTracks.length; i++) {
+    var tr = inTracks[i];
+    ctx.beginPath();
+    ctx.moveTo(tr.p0[0], tr.p0[1]);
+    ctx.bezierCurveTo(tr.p1[0], tr.p1[1], tr.p2[0], tr.p2[1], tr.p3[0], tr.p3[1]);
+    ctx.strokeStyle = tr.type === "bull" ? "rgba(5, 150, 105, 0.22)" : "rgba(220, 38, 38, 0.25)";
+    ctx.lineWidth = tr.width;
+    ctx.stroke();
+  }
+
+  // Outflow Tracks
+  for (var i = 0; i < outTracks.length; i++) {
+    var tr = outTracks[i];
+    ctx.beginPath();
+    ctx.moveTo(tr.p0[0], tr.p0[1]);
+    ctx.bezierCurveTo(tr.p1[0], tr.p1[1], tr.p2[0], tr.p2[1], tr.p3[0], tr.p3[1]);
+    ctx.strokeStyle = tr.type === "bull" ? "rgba(5, 150, 105, 0.35)" : "rgba(220, 38, 38, 0.32)";
+    ctx.lineWidth = tr.width;
+    ctx.stroke();
+  }
+
+  // Inflow Pulses
+  for (var i = 0; i < inPulses.length; i++) {
+    var pt = inPulses[i];
+    pt.t += pt.speed;
+    if (pt.t > 1) pt.t = 0;
+
+    var tr = inTracks[pt.trackIndex];
+    var head = getPoint(tr.p0, tr.p1, tr.p2, tr.p3, pt.t);
+    var tail = getPoint(tr.p0, tr.p1, tr.p2, tr.p3, Math.max(0, pt.t - pt.len));
+
+    var grad = ctx.createLinearGradient(tail[0], tail[1], head[0], head[1]);
+    grad.addColorStop(0, tr.type === "bull" ? "rgba(5, 150, 105, 0)" : "rgba(220, 38, 38, 0)");
+    grad.addColorStop(1, tr.type === "bull" ? "rgba(16, 185, 129, 0.95)" : "rgba(239, 68, 68, 0.95)");
+
+    ctx.beginPath();
+    ctx.moveTo(tail[0], tail[1]);
+    ctx.lineTo(head[0], head[1]);
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = tr.width + 0.6;
+    ctx.stroke();
+  }
+
+  // Outflow Pulses
+  for (var i = 0; i < outPulses.length; i++) {
+    var pt = outPulses[i];
+    pt.t += pt.speed;
+    if (pt.t > 1) pt.t = 0;
+
+    var tr = outTracks[pt.trackIndex];
+    var head = getPoint(tr.p0, tr.p1, tr.p2, tr.p3, pt.t);
+    var tail = getPoint(tr.p0, tr.p1, tr.p2, tr.p3, Math.max(0, pt.t - pt.len));
+
+    var grad = ctx.createLinearGradient(tail[0], tail[1], head[0], head[1]);
+    grad.addColorStop(0, tr.type === "bull" ? "rgba(5, 150, 105, 0)" : "rgba(220, 38, 38, 0)");
+    grad.addColorStop(1, tr.type === "bull" ? "rgba(5, 150, 105, 1)" : "rgba(220, 38, 38, 1)");
+
+    ctx.beginPath();
+    ctx.moveTo(tail[0], tail[1]);
+    ctx.lineTo(head[0], head[1]);
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 1.3;
+    ctx.stroke();
+  }
+
+  // Ladder Ticks
+  for (var i = 0; i < 90; i++) {
+    var isBull = i < 68;
+    var y = 30 + i * 7.5;
+    var tickLen = 60 + Math.sin(i * 1.5) * 50;
+    ctx.beginPath();
+    ctx.moveTo(ladderX, y);
+    ctx.lineTo(ladderX + tickLen, y);
+    ctx.strokeStyle = isBull ? "rgba(5, 150, 105, 0.45)" : "rgba(220, 38, 38, 0.40)";
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+  }
+
+  // Choda Scanner Box
+  var boxTop = 28;
+  var boxHeight = 340;
+  ctx.fillStyle = "rgba(5, 150, 105, 0.08)";
+  ctx.fillRect(ladderX, boxTop, boxWidth, boxHeight);
+  ctx.strokeStyle = "#059669";
+  ctx.lineWidth = 1.8;
+  ctx.strokeRect(ladderX, boxTop, boxWidth, boxHeight);
+
+  // Corner Handles
+  var arm = 14;
+  ctx.lineWidth = 3.5;
+  ctx.strokeStyle = "#059669";
+  
+  ctx.beginPath();
+  ctx.moveTo(ladderX - 2, boxTop + arm);
+  ctx.lineTo(ladderX - 2, boxTop - 2);
+  ctx.lineTo(ladderX + arm, boxTop - 2);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(boxRight + 2 - arm, boxTop - 2);
+  ctx.lineTo(boxRight + 2, boxTop - 2);
+  ctx.lineTo(boxRight + 2, boxTop + arm);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(ladderX - 2, boxTop + boxHeight - arm);
+  ctx.lineTo(ladderX - 2, boxTop + boxHeight + 2);
+  ctx.lineTo(ladderX + arm, boxTop + boxHeight + 2);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(boxRight + 2 - arm, boxTop + boxHeight + 2);
+  ctx.lineTo(boxRight + 2, boxTop + boxHeight + 2);
+  ctx.lineTo(boxRight + 2, boxTop + boxHeight - arm);
+  ctx.stroke();
+
+  // Bearish Box
+  ctx.strokeStyle = "#dc2626";
+  ctx.lineWidth = 1.8;
+  ctx.fillStyle = "rgba(220, 38, 38, 0.06)";
+  ctx.fillRect(ladderX, 540, boxWidth, 140);
+  ctx.strokeRect(ladderX, 540, boxWidth, 140);
+
+  requestAnimationFrame(render);
+}
+requestAnimationFrame(render);
+
+// Real-Time Numbers Ticker
+var currentBull = 172;
+var currentBear = 41;
+
+setInterval(function() {
+  var delta = Math.floor(Math.random() * 5) - 2;
+  currentBull = Math.min(Math.max(145, currentBull + delta), 185);
+  currentBear = 213 - currentBull;
+
+  var bEl = document.getElementById("bullCounter");
+  var rEl = document.getElementById("bearCounter");
+  if (bEl && rEl) {
+    bEl.innerText = currentBull;
+    rEl.innerText = currentBear;
+  }
+
+  var randomStk = topStocks[Math.floor(Math.random() * topStocks.length)];
+  var pctDelta = (Math.random() * 0.16 - 0.08);
+  randomStk.pct += pctDelta;
+  randomStk.price += (randomStk.price * (pctDelta / 100));
+
+  var cardEl = document.getElementById("card-el-" + randomStk.id);
+  var priceEl = document.getElementById("price-" + randomStk.id);
+  if (priceEl && cardEl) {
+    priceEl.innerText = "₹" + randomStk.price.toFixed(2) + " • " + randomStk.sec;
+    cardEl.classList.add(pctDelta >= 0 ? "flash-green" : "flash-red");
+    setTimeout(function() { cardEl.classList.remove("flash-green", "flash-red"); }, 400);
+  }
+
+  for (var i = 0; i < topDots.length; i++) {
+    if (Math.random() > 0.6) topDots[i].x += (Math.random() * 4 - 2);
+  }
+}, 3200);
+
+// Modal Helpers
+function openModal(stk) {
+  document.getElementById("mStock").innerText = stk.name;
+  document.getElementById("mSector").innerText = stk.sec + " SECTOR";
+  document.getElementById("mPrice").innerText = "₹" + stk.price.toFixed(2);
+  var p = document.getElementById("mPct");
+  var sign = stk.pct >= 0 ? "+" : "";
+  p.innerText = sign + stk.pct.toFixed(2) + "%";
+  p.style.color = stk.type === "bull" ? "#059669" : "#dc2626";
+  document.getElementById("mVwap").innerText = stk.vwap;
+  document.getElementById("mSup").innerText = stk.sup;
+  document.getElementById("mRes").innerText = stk.res;
+  document.getElementById("mOi").innerText = stk.type === "bull" ? "+18.4%" : "-14.2%";
+  document.getElementById("mBias").innerText = stk.type === "bull" ? "BULLISH" : "BEARISH";
+  document.getElementById("mBias").style.color = stk.type === "bull" ? "#059669" : "#dc2626";
+  document.getElementById("modalBackdrop").style.display = "flex";
+}
+function closeModal() {
+  document.getElementById("modalBackdrop").style.display = "none";
+}
+</script>
+</body>
+</html>
