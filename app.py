@@ -3,7 +3,7 @@ import streamlit.components.v1 as components
 
 st.set_page_config(page_title="Order Block", layout="wide", initial_sidebar_state="collapsed")
 
-# Custom injection to remove Streamlit padding
+# Margin aur padding hatane ke liye custom CSS
 st.markdown("""
 <style>
     .block-container { padding: 0 !important; max-width: 100% !important; }
@@ -14,4 +14,4 @@ st.markdown("""
 with open("index.html", "r", encoding="utf-8") as f:
     html_content = f.read()
 
-components.html(html_content, height=850, scrolling=True)
+components.html(html_content, height=820, scrolling=False)
