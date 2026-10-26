@@ -6,127 +6,141 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
   html, body {
-    background-color: #f4f6f8; color: #1e293b;
+    background-color: #f0f3f6; color: #1e293b;
     width: 100%; height: 100%; overflow: auto;
     user-select: none;
   }
 
-  /* Top Bar */
+  /* Top Navigation */
   .top-header {
-    position: sticky; top: 0; z-index: 100; height: 46px;
+    position: sticky; top: 0; z-index: 100; height: 44px;
     display: flex; justify-content: space-between; align-items: center;
-    padding: 0 20px; background: #ffffff; border-bottom: 1px solid #e2e8f0;
+    padding: 0 16px; background: #ffffff; border-bottom: 1px solid #dce2e6;
   }
-  .brand-title { font-size: 13px; font-weight: 700; color: #0f172a; letter-spacing: 0.4px; }
+  .brand-title { font-size: 13px; font-weight: 700; color: #0f172a; letter-spacing: 0.5px; }
   .stats-pill {
-    display: flex; gap: 16px; font-size: 11px; font-weight: 700;
-    background: #f8fafc; padding: 4px 14px; border-radius: 4px; border: 1px solid #e2e8f0;
+    display: flex; gap: 14px; font-size: 11px; font-weight: 700;
+    background: #f8fafc; padding: 4px 12px; border-radius: 4px; border: 1px solid #e2e8f0;
   }
   .bull-txt { color: #059669; }
   .bear-txt { color: #dc2626; }
 
-  /* Zoom & Pan Controller */
+  /* Zoom Floating HUD */
   .zoom-controls {
     position: fixed; bottom: 20px; right: 20px; z-index: 900;
     display: flex; flex-direction: column; gap: 8px;
   }
   .zoom-btn {
     width: 38px; height: 38px; border-radius: 50%; background: #ffffff;
-    border: 1px solid #cbd5e1; box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    border: 1px solid #cbd5e1; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     font-size: 18px; font-weight: bold; color: #1e293b; display: flex;
     align-items: center; justify-content: center; cursor: pointer;
   }
   .zoom-btn:active { background: #e2e8f0; }
 
+  /* Pan Wrapper */
   #pan-container {
-    position: relative; width: 100vw; height: calc(100vh - 46px);
+    position: relative; width: 100vw; height: calc(100vh - 44px);
     overflow: hidden; touch-action: none;
   }
   #workspace {
-    position: absolute; left: 0; top: 0; width: 1720px; height: 860px;
+    position: absolute; left: 0; top: 0; width: 1650px; height: 820px;
     transform-origin: 0 0; will-change: transform;
   }
 
-  /* Canvas Engine Layer */
+  /* Canvas Layer */
   #flowCanvas {
-    position: absolute; left: 0; top: 0; width: 1720px; height: 860px;
+    position: absolute; left: 0; top: 0; width: 1650px; height: 820px;
     z-index: 1; pointer-events: none;
   }
 
-  /* 1. Left Sector Overlay */
+  /* 1. Left Sector Column */
   .sector-column {
-    position: absolute; left: 20px; top: 50px; width: 180px; z-index: 3;
-    display: flex; flex-direction: column; gap: 4px;
+    position: absolute; left: 16px; top: 40px; width: 175px; z-index: 3;
+    display: flex; flex-direction: column; gap: 3.5px;
   }
   .sec-item {
     display: flex; justify-content: space-between; align-items: center;
-    background: rgba(255, 255, 255, 0.92); border: 1px solid #cbd5e1; border-radius: 3px;
-    padding: 2px 7px; font-size: 9.5px; font-weight: 600; height: 21px; backdrop-filter: blur(2px);
+    background: rgba(255, 255, 255, 0.94); border: 1px solid #cbd5e1; border-radius: 3px;
+    padding: 2px 6px; font-size: 9px; font-weight: 600; height: 21px; backdrop-filter: blur(2px);
   }
-  .bar-box { width: 44px; height: 3.5px; background: #e2e8f0; border-radius: 2px; overflow: hidden; margin: 0 4px; }
+  .bar-box { width: 42px; height: 3.5px; background: #e2e8f0; border-radius: 2px; overflow: hidden; margin: 0 4px; }
   .bar-val { height: 100%; border-radius: 2px; }
 
-  /* 2. Right Side: Multi-Tier Cards System (Exact Video Architecture) */
+  /* 2. Right Multi-Column Stock Grid (Exact 3-Stage Layout from Video) */
   #right-grid {
-    position: absolute; left: 1120px; top: 35px; width: 580px; z-index: 3;
-    display: flex; flex-direction: column; gap: 16px;
+    position: absolute; left: 1050px; top: 25px; width: 580px; z-index: 3;
+    display: flex; flex-direction: column; gap: 14px;
   }
 
-  .tier-section { display: flex; flex-direction: column; gap: 10px; }
-  .tier-row { display: flex; gap: 12px; align-items: flex-start; }
+  .grid-block { display: flex; flex-direction: column; gap: 10px; }
+  .stock-row { display: flex; gap: 10px; align-items: stretch; }
 
-  /* Tier 1 Compact Card */
-  .compact-card {
-    width: 145px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px;
-    padding: 5px 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-size: 10px; cursor: pointer;
+  /* Column 1: Filtered Stock Chip */
+  .chip-col { width: 130px; display: flex; flex-direction: column; gap: 6px; }
+  .chip-card {
+    background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px;
+    padding: 5px 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-size: 9.5px;
   }
-  .compact-card.bull { border-left: 3.5px solid #059669; }
-  .compact-card.bear { border-left: 3.5px solid #dc2626; }
-  .card-top { display: flex; justify-content: space-between; font-weight: 700; color: #0f172a; }
-  .card-sub { font-size: 8.5px; color: #64748b; margin-top: 2px; }
+  .chip-card.bull { border-left: 3.5px solid #059669; }
+  .chip-card.bear { border-left: 3.5px solid #dc2626; }
+  .chip-title { display: flex; justify-content: space-between; font-weight: 700; color: #0f172a; }
+  .chip-sub { font-size: 8px; color: #64748b; margin-top: 1px; }
 
-  /* Tier 2 & 3: Detailed Big Card with Mini Intraday Trendline */
+  /* Column 2: Focus Card */
+  .mid-card {
+    width: 145px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 5px;
+    padding: 6px 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); cursor: pointer;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .mid-card.bull { border-left: 4px solid #059669; }
+  .mid-card.bear { border-left: 4px solid #dc2626; }
+  .mid-name { font-size: 11px; font-weight: 800; color: #0f172a; }
+  .mid-pct { font-size: 12px; font-weight: 800; margin: 3px 0; }
+  .mid-sub { font-size: 8.5px; color: #64748b; }
+
+  /* Column 3: Large Master Card with Area Chart */
   .master-card {
     flex: 1; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.07); padding: 8px 10px; cursor: pointer;
-    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08); padding: 7px 10px; cursor: pointer;
+    transition: transform 0.15s;
   }
-  .master-card:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(0,0,0,0.12); }
+  .master-card:hover { transform: translateY(-2px); }
   .master-card.bull { border-left: 5px solid #059669; }
   .master-card.bear { border-left: 5px solid #dc2626; }
 
-  .m-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
-  .m-name { font-size: 13px; font-weight: 800; color: #0f172a; }
-  .m-badge { font-size: 8px; font-weight: 800; padding: 2px 6px; border-radius: 3px; text-transform: uppercase; }
-  .badge-bull { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
-  .badge-bear { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+  .m-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
+  .m-name { font-size: 12.5px; font-weight: 800; color: #0f172a; }
+  .m-badge { font-size: 8px; font-weight: 800; padding: 2px 5px; border-radius: 3px; }
+  .b-bull { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+  .b-bear { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
 
-  .m-body { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  .m-price-box { font-size: 18px; font-weight: 800; }
-  .m-pct { font-size: 11px; font-weight: 700; }
+  .m-body { display: flex; justify-content: space-between; align-items: center; }
+  .m-price { font-size: 17px; font-weight: 800; }
+  .m-pct { font-size: 10.5px; font-weight: 700; }
 
-  .sparkline-box { width: 140px; height: 38px; }
+  .spark-canvas { width: 130px; height: 34px; }
 
-  .m-footer-levels {
-    display: flex; justify-content: space-between; margin-top: 6px; padding-top: 4px;
-    border-top: 1px dashed #e2e8f0; font-size: 9px; color: #64748b;
+  .m-footer {
+    display: flex; justify-content: space-between; margin-top: 5px; padding-top: 3px;
+    border-top: 1px dashed #e2e8f0; font-size: 8.5px; color: #64748b;
   }
-  .m-footer-levels b { color: #1e293b; }
+  .m-footer b { color: #1e293b; }
 
-  /* Modal Viewport */
+  /* Modal Popup */
   .modal-overlay {
     display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65);
     z-index: 999; justify-content: center; align-items: center; backdrop-filter: blur(4px);
   }
   .modal-box {
     background: #ffffff; border-radius: 10px; box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-    width: 680px; max-width: 95vw; padding: 18px; border: 1px solid #cbd5e1;
+    width: 660px; max-width: 95vw; padding: 18px; border: 1px solid #cbd5e1;
   }
-  .modal-close { float: right; font-size: 22px; border: none; background: none; cursor: pointer; color: #64748b; font-weight: bold; }
-  #obChartCanvas { width: 100%; height: 260px; background: #0f172a; border-radius: 6px; margin: 12px 0; }
+  .modal-close { float: right; font-size: 20px; border: none; background: none; cursor: pointer; color: #64748b; font-weight: bold; }
+  #obChartCanvas { width: 100%; height: 250px; background: #0f172a; border-radius: 6px; margin: 12px 0; }
   .modal-metrics {
     display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
-    background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px; font-size: 11px;
+    background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px; font-size: 10.5px;
   }
 </style>
 </head>
@@ -148,13 +162,13 @@
 
 <div id="pan-container">
   <div id="workspace">
-    <canvas id="flowCanvas" width="1720" height="860"></canvas>
+    <canvas id="flowCanvas" width="1650" height="820"></canvas>
     <div class="sector-column" id="sectorContainer"></div>
     <div id="right-grid"></div>
   </div>
 </div>
 
-<!-- Detailed Order Block Popup Modal -->
+<!-- Click Modal Window -->
 <div class="modal-overlay" id="detailModal">
   <div class="modal-box">
     <button class="modal-close" onclick="closeModal()">✕</button>
@@ -169,7 +183,7 @@
       </div>
     </div>
 
-    <canvas id="obChartCanvas" width="640" height="260"></canvas>
+    <canvas id="obChartCanvas" width="620" height="250"></canvas>
 
     <div class="modal-metrics">
       <div>ZONE: <b id="mdlZone" style="color:#059669;">10:00 AM PULLBACK</b></div>
@@ -181,11 +195,11 @@
 </div>
 
 <script>
-// --- PINCH / ZOOM / PAN ENGINE ---
-var scale = 0.78;
-var panX = 15, panY = 10;
+// --- PINCH / ZOOM / PAN ---
+var scale = 0.82;
+var panX = 10, panY = 10;
 var isPanning = false, startX = 0, startY = 0;
-var initialDist = 0, initialScale = 0.78;
+var initialDist = 0, initialScale = 0.82;
 
 var workspace = document.getElementById("workspace");
 var panContainer = document.getElementById("pan-container");
@@ -197,7 +211,7 @@ function updateTransform() {
 updateTransform();
 
 function zoom(delta) { scale += delta; updateTransform(); }
-function resetZoom() { scale = 0.78; panX = 15; panY = 10; updateTransform(); }
+function resetZoom() { scale = 0.82; panX = 10; panY = 10; updateTransform(); }
 
 panContainer.addEventListener('touchstart', function(e) {
   if (e.touches.length === 1) {
@@ -227,7 +241,7 @@ panContainer.addEventListener('touchmove', function(e) {
 panContainer.addEventListener('touchend', function() { isPanning = false; initialDist = 0; });
 panContainer.addEventListener('wheel', function(e) { e.preventDefault(); scale += e.deltaY * -0.001; updateTransform(); }, { passive: false });
 
-// --- DATA: EXACT SECTORS & STOCKS FROM VIDEO ---
+// --- DATA: EXACT AS SHOWN IN VIDEO ---
 var sectors = [
   { name: "IT", pct: "+2.87%", type: "bull", val: 86 },
   { name: "LOGISTICS", pct: "+2.41%", type: "bull", val: 80 },
@@ -254,38 +268,44 @@ var sectors = [
   { name: "ENERGY", pct: "-1.12%", type: "bear", val: 40 }
 ];
 
-// Multi-Tier Stocks directly from the video
-var bullStocks = [
+// Exact stock cards grouped as in the video
+var bullGroups = [
   {
-    tier1: { name: "ABCAPITAL", sec: "FINANCE", price: "228.40", pct: "+3.85%" },
+    chip1: { name: "ABCAPITAL", price: "228.40", pct: "+3.85%" },
+    chip2: { name: "ITC", price: "488.20", pct: "+1.92%" },
+    mid: { name: "AUROPHARMA", sec: "PHARMA", price: "1,245.00", pct: "+2.85%" },
     master: { name: "EICHERMOT", sec: "AUTO", price: "7,058.00", pct: "+4.17%", sup: "7,001.45", zone: "7,010-7,020", res: "7,088.00", vwap: "7,011.24", type: "bull" }
   },
   {
-    tier1: { name: "AUROPHARMA", sec: "PHARMA", price: "1,245.00", pct: "+2.85%" },
+    chip1: { name: "COLPAL", price: "3,120.00", pct: "+2.40%" },
+    chip2: { name: "GLENMARK", price: "1,450.00", pct: "+1.75%" },
+    mid: { name: "LICI", sec: "INSURANCE", price: "982.50", pct: "+2.14%" },
     master: { name: "TVSMOTOR", sec: "AUTO", price: "2,480.00", pct: "+0.71%", sup: "2,450.00", zone: "2,460-2,468", res: "2,510.00", vwap: "2,462.10", type: "bull" }
   },
   {
-    tier1: { name: "LICI", sec: "INSURANCE", price: "982.50", pct: "+2.14%" },
+    chip1: { name: "INDIANB", price: "542.00", pct: "+1.65%" },
+    chip2: { name: "CUMMINSIND", price: "3,680.00", pct: "+1.80%" },
+    mid: { name: "RBLBANK", sec: "BANK", price: "218.40", pct: "+1.85%" },
     master: { name: "INOXWIND", sec: "ENERGY", price: "142.10", pct: "+6.76%", sup: "138.00", zone: "139-141", res: "146.50", vwap: "139.80", type: "bull" }
   }
 ];
 
-var bearStocks = [
+var bearGroups = [
   {
-    tier1: { name: "FORTIS", sec: "PHARMA", price: "482.00", pct: "-3.15%" },
+    chip1: { name: "FORTIS", price: "482.00", pct: "-3.15%" },
+    chip2: { name: "AMBER", price: "4,120.00", pct: "-2.80%" },
+    mid: { name: "GODREJCP", sec: "FMCG", price: "1,180.00", pct: "-2.45%" },
     master: { name: "ANANDRATHI", sec: "FINANCE", price: "2,038.70", pct: "-4.68%", sup: "2,010.00", zone: "2,050-2,060", res: "2,080.00", vwap: "2,065.40", type: "bear" }
   },
   {
-    tier1: { name: "GODREJCP", sec: "FMCG", price: "1,180.00", pct: "-2.45%" },
-    master: { name: "MPHASIS", sec: "IT", price: "2,610.00", pct: "-2.14%", sup: "2,580.00", zone: "2,620-2,630", res: "2,640.00", vwap: "2,632.00", type: "bear" }
-  },
-  {
-    tier1: { name: "ASTRAL", sec: "CAP GOODS", price: "1,840.00", pct: "-1.95%" },
+    chip1: { name: "KPITTECH", price: "1,620.00", pct: "-2.10%" },
+    chip2: { name: "ASTRAL", price: "1,840.00", pct: "-1.95%" },
+    mid: { name: "MPHASIS", sec: "IT", price: "2,610.00", pct: "-2.14%" },
     master: { name: "COFORGE", sec: "IT", price: "7,450.00", pct: "-1.85%", sup: "7,380.00", zone: "7,480-7,500", res: "7,510.00", vwap: "7,492.00", type: "bear" }
   }
 ];
 
-// 1. Build Left Sectors
+// 1. Build Left Sectors List
 var sectorStartYs = [];
 var secContainer = document.getElementById("sectorContainer");
 for (var i = 0; i < sectors.length; i++) {
@@ -297,89 +317,96 @@ for (var i = 0; i < sectors.length; i++) {
                   '<div class="bar-box"><div class="bar-val" style="width:' + s.val + '%; background:' + color + ';"></div></div>' +
                   '<span style="color:' + color + ';">' + s.pct + '</span>';
   secContainer.appendChild(div);
-  sectorStartYs.push({ y: 50 + i * 25 + 10, type: s.type });
+  sectorStartYs.push({ y: 40 + i * 24.5 + 10, type: s.type });
 }
 
-// 2. Build Right Multi-Tier Cards
+// 2. Build Right Multi-Tier Grid
 var rightGrid = document.getElementById("right-grid");
-var cardTargetAnchors = [];
 
-function createTierGroup(items, isBull) {
-  var secGroup = document.createElement("div");
-  secGroup.className = "tier-section";
+function buildTierSection(groups, isBull) {
+  var block = document.createElement("div");
+  block.className = "grid-block";
 
-  for (var i = 0; i < items.length; i++) {
-    var it = items[i];
+  for (var i = 0; i < groups.length; i++) {
+    var g = groups[i];
     var row = document.createElement("div");
-    row.className = "tier-row";
+    row.className = "stock-row";
 
-    // Compact Card (Tier 1)
-    var cCard = document.createElement("div");
-    cCard.className = "compact-card " + (isBull ? "bull" : "bear");
-    cCard.innerHTML = '<div class="card-top"><span>' + it.tier1.name + '</span><span style="color:' + (isBull ? "#059669" : "#dc2626") + ';">' + it.tier1.pct + '</span></div>' +
-                      '<div class="card-sub">₹' + it.tier1.price + ' • ' + it.tier1.sec + '</div>';
-    row.appendChild(cCard);
+    // Column 1: Filtered Chips
+    var chipCol = document.createElement("div");
+    chipCol.className = "chip-col";
+    chipCol.innerHTML =
+      '<div class="chip-card ' + (isBull ? 'bull' : 'bear') + '">' +
+        '<div class="chip-title"><span>' + g.chip1.name + '</span><span style="color:' + (isBull ? '#059669' : '#dc2626') + ';">' + g.chip1.pct + '</span></div>' +
+        '<div class="chip-sub">₹' + g.chip1.price + '</div>' +
+      '</div>' +
+      '<div class="chip-card ' + (isBull ? 'bull' : 'bear') + '">' +
+        '<div class="chip-title"><span>' + g.chip2.name + '</span><span style="color:' + (isBull ? '#059669' : '#dc2626') + ';">' + g.chip2.pct + '</span></div>' +
+        '<div class="chip-sub">₹' + g.chip2.price + '</div>' +
+      '</div>';
+    row.appendChild(chipCol);
 
-    // Big Master Card with Mini Trendline (Tier 2 & 3)
+    // Column 2: Focus Card
+    var midCard = document.createElement("div");
+    midCard.className = "mid-card " + (isBull ? 'bull' : 'bear');
+    midCard.innerHTML =
+      '<div><div class="mid-name">' + g.mid.name + '</div><div class="mid-sub">' + g.mid.sec + '</div></div>' +
+      '<div class="mid-pct" style="color:' + (isBull ? '#059669' : '#dc2626') + ';">' + g.mid.pct + '</div>' +
+      '<div class="mid-sub">₹' + g.mid.price + '</div>';
+    row.appendChild(midCard);
+
+    // Column 3: Large Master Card with Trendline
     var mCard = document.createElement("div");
-    mCard.className = "master-card " + (isBull ? "bull" : "bear");
-    (function(stock) {
-      mCard.onclick = function() { openDetailModal(stock); };
-    })(it.master);
+    mCard.className = "master-card " + (isBull ? 'bull' : 'bear');
+    (function(stk) {
+      mCard.onclick = function() { openDetailModal(stk); };
+    })(g.master);
 
-    var sparkCanvasId = "spark_" + (isBull ? "bull_" : "bear_") + i;
+    var sparkId = "spark_" + (isBull ? "bull_" : "bear_") + i;
     mCard.innerHTML =
       '<div class="m-header">' +
-        '<div>' +
-          '<div class="m-name">' + it.master.name + '</div>' +
-          '<div style="font-size:9px; color:#64748b;">' + it.master.sec + '</div>' +
-        '</div>' +
-        '<span class="m-badge ' + (isBull ? 'badge-bull' : 'badge-bear') + '">' + (isBull ? 'BULLISH' : 'BEARISH') + '</span>' +
+        '<div class="m-name">' + g.master.name + '</div>' +
+        '<span class="m-badge ' + (isBull ? 'b-bull' : 'b-bear') + '">' + (isBull ? 'BULLISH' : 'BEARISH') + '</span>' +
       '</div>' +
       '<div class="m-body">' +
         '<div>' +
-          '<div class="m-price-box" style="color:' + (isBull ? "#059669" : "#dc2626") + ';">₹' + it.master.price + '</div>' +
-          '<div class="m-pct" style="color:' + (isBull ? "#059669" : "#dc2626") + ';">' + it.master.pct + '</div>' +
+          '<div class="m-price" style="color:' + (isBull ? '#059669' : '#dc2626') + ';">₹' + g.master.price + '</div>' +
+          '<div class="m-pct" style="color:' + (isBull ? '#059669' : '#dc2626') + ';">' + g.master.pct + '</div>' +
         '</div>' +
-        '<canvas id="' + sparkCanvasId + '" class="sparkline-box" width="140" height="38"></canvas>' +
+        '<canvas id="' + sparkId + '" class="spark-canvas" width="130" height="34"></canvas>' +
       '</div>' +
-      '<div class="m-footer-levels">' +
-        '<span>SUP: <b>' + it.master.sup + '</b></span>' +
-        '<span>ZONE: <b>' + it.master.zone + '</b></span>' +
-        '<span>RES: <b>' + it.master.res + '</b></span>' +
+      '<div class="m-footer">' +
+        '<span>SUP: <b>' + g.master.sup + '</b></span>' +
+        '<span>ZONE: <b>' + g.master.zone + '</b></span>' +
+        '<span>RES: <b>' + g.master.res + '</b></span>' +
       '</div>';
-
     row.appendChild(mCard);
-    secGroup.appendChild(row);
 
-    // Save Anchor point for connecting lines
-    cardTargetAnchors.push({ isBull: isBull, cardId: sparkCanvasId });
+    block.appendChild(row);
   }
-  rightGrid.appendChild(secGroup);
+  rightGrid.appendChild(block);
 }
 
-createTierGroup(bullStocks, true);
-createTierGroup(bearStocks, false);
+buildTierSection(bullGroups, true);
+buildTierSection(bearGroups, false);
 
 // Draw Sparklines in Cards
 setTimeout(function() {
-  for (var i = 0; i < 3; i++) {
-    drawMiniSparkline("spark_bull_" + i, true);
-    drawMiniSparkline("spark_bear_" + i, false);
-  }
-}, 50);
+  for (var i = 0; i < 3; i++) drawSparkline("spark_bull_" + i, true);
+  for (var i = 0; i < 2; i++) drawSparkline("spark_bear_" + i, false);
+}, 60);
 
-function drawMiniSparkline(id, isBull) {
+function drawSparkline(id, isBull) {
   var cv = document.getElementById(id);
   if (!cv) return;
   var g = cv.getContext("2d");
   var w = cv.width, h = cv.height;
 
   var pts = [];
-  var cur = isBull ? 28 : 10;
-  for (var k = 0; k < 18; k++) {
+  var cur = isBull ? 25 : 8;
+  for (var k = 0; k < 16; k++) {
     cur += isBull ? (Math.random() * 4 - 2.8) : (Math.random() * 4 - 1.2);
-    cur = Math.max(4, Math.min(h - 4, cur));
+    cur = Math.max(3, Math.min(h - 3, cur));
     pts.push(cur);
   }
 
@@ -393,7 +420,6 @@ function drawMiniSparkline(id, isBull) {
   g.lineWidth = 1.8;
   g.stroke();
 
-  // Gradient fill underneath
   g.lineTo(w, h);
   g.lineTo(0, h);
   g.fillStyle = isBull ? "rgba(5, 150, 105, 0.12)" : "rgba(220, 38, 38, 0.12)";
@@ -404,45 +430,45 @@ function drawMiniSparkline(id, isBull) {
 var canvas = document.getElementById("flowCanvas");
 var ctx = canvas.getContext("2d");
 
-var ladderX = 840;
-var boxWidth = 160;
-var boxRight = ladderX + boxWidth; // 1000px
-var targetConnectX = 1120; // Exact left edge of right grid!
+var ladderX = 800;
+var boxWidth = 155;
+var boxRight = ladderX + boxWidth; // 955px
+var targetGridX = 1050; // Snaps directly to Column 1 chips
 
 var inTracks = [];
 var outTracks = [];
 
-// 1. DENSE INFLOW: 180+ waterfall lines surging steeply UPWARDS
+// Inflow Waterfall: 180+ curves steep climb
 for (var i = 0; i < sectorStartYs.length; i++) {
   var sec = sectorStartYs[i];
-  var count = sec.type === "bull" ? 10 : 4;
+  var count = sec.type === "bull" ? 11 : 4;
   for (var k = 0; k < count; k++) {
     var targetY = sec.type === "bull"
-      ? (34 + Math.pow(Math.random(), 1.6) * 360)
-      : (590 + Math.random() * 160);
+      ? (32 + Math.pow(Math.random(), 1.6) * 350)
+      : (565 + Math.random() * 155);
 
     inTracks.push({
-      p0: [200, sec.y],
+      p0: [195, sec.y],
       p1: [320 + Math.random() * 70, sec.y + (targetY - sec.y) * 0.1],
-      p2: [580 + Math.random() * 80, targetY + 12],
+      p2: [560 + Math.random() * 70, targetY + 10],
       p3: [ladderX, targetY],
       type: sec.type,
-      width: Math.random() * 0.5 + 0.4
+      width: Math.random() * 0.5 + 0.45
     });
   }
 }
 
-// 2. CONNECTING OUTFLOW: Lines from right edge of Scanner Box into Right Grid
-for (var k = 0; k < 18; k++) {
-  var isBull = k < 10;
-  var srcY = isBull ? (38 + Math.random() * 350) : (595 + Math.random() * 150);
-  var destY = isBull ? (55 + Math.random() * 320) : (580 + Math.random() * 220);
+// Outflow Lines: From Scanner Box into Column 1 chips
+for (var k = 0; k < 20; k++) {
+  var isBull = k < 12;
+  var srcY = isBull ? (35 + Math.random() * 340) : (570 + Math.random() * 150);
+  var destY = isBull ? (40 + Math.random() * 330) : (560 + Math.random() * 180);
 
   outTracks.push({
     p0: [boxRight, srcY],
-    p1: [boxRight + 35, srcY],
-    p2: [targetConnectX - 40, destY],
-    p3: [targetConnectX, destY],
+    p1: [boxRight + 30, srcY],
+    p2: [targetGridX - 35, destY],
+    p3: [targetGridX, destY],
     type: isBull ? "bull" : "bear",
     width: 0.8
   });
@@ -472,7 +498,7 @@ function getPoint(p0, p1, p2, p3, t) {
 var topDots = [];
 for (var i = 0; i < 90; i++) {
   topDots.push({
-    x: 460 + Math.random() * 380,
+    x: 440 + Math.random() * 350,
     y: 18 + (Math.random() * 14 - 7),
     type: Math.random() > 0.22 ? "bull" : "bear"
   });
@@ -483,7 +509,7 @@ function render() {
 
   // Top Breadth Scatter Meter
   ctx.fillStyle = "rgba(203, 213, 225, 0.45)";
-  ctx.fillRect(440, 18, 410, 2);
+  ctx.fillRect(420, 18, 390, 2);
   for (var i = 0; i < topDots.length; i++) {
     var d = topDots[i];
     ctx.beginPath();
@@ -492,18 +518,18 @@ function render() {
     ctx.fill();
   }
 
-  // Faint Blue Support/Resistance Level Lines
-  var levels = [130, 290, 480, 670];
+  // Horizontal Blue Reference Levels
+  var levels = [130, 280, 460, 640];
   for (var i = 0; i < levels.length; i++) {
     ctx.beginPath();
-    ctx.moveTo(200, levels[i]);
+    ctx.moveTo(195, levels[i]);
     ctx.lineTo(ladderX + boxWidth, levels[i]);
     ctx.strokeStyle = "rgba(59, 130, 246, 0.35)";
     ctx.lineWidth = 1;
     ctx.stroke();
   }
 
-  // Base Inflow Tracks (Massive Waterfall Web)
+  // Base Inflow Waterfall Lines
   for (var i = 0; i < inTracks.length; i++) {
     var tr = inTracks[i];
     ctx.beginPath();
@@ -514,7 +540,7 @@ function render() {
     ctx.stroke();
   }
 
-  // Base Outflow Tracks (Connecting to Right Grid)
+  // Base Outflow Lines
   for (var i = 0; i < outTracks.length; i++) {
     var tr = outTracks[i];
     ctx.beginPath();
@@ -525,7 +551,7 @@ function render() {
     ctx.stroke();
   }
 
-  // Moving Fluid Pulses
+  // Fluid Moving Wave
   for (var i = 0; i < inPulses.length; i++) {
     var pt = inPulses[i];
     pt.t += pt.speed; if (pt.t > 1) pt.t = 0;
@@ -564,10 +590,10 @@ function render() {
     ctx.stroke();
   }
 
-  // Full-Height Continuous Ladder Ticks
-  for (var i = 0; i < 98; i++) {
-    var isBull = i < 70;
-    var y = 30 + i * 8;
+  // Continuous Full-Length Micro Ladder Ticks
+  for (var i = 0; i < 96; i++) {
+    var isBull = i < 68;
+    var y = 28 + i * 8;
     var tickLen = 65 + Math.sin(i * 1.5) * 55;
     ctx.beginPath();
     ctx.moveTo(ladderX, y);
@@ -577,37 +603,35 @@ function render() {
     ctx.stroke();
   }
 
-  // Choda Bullish Selection Box with L-Corner Handles (Exact Video Style)
-  var boxTop = 28;
-  var boxHeight = 365;
+  // Bullish Selection Box (L-Corner Handles)
+  var boxTop = 26;
+  var boxHeight = 360;
   ctx.fillStyle = "rgba(5, 150, 105, 0.08)";
   ctx.fillRect(ladderX, boxTop, boxWidth, boxHeight);
   ctx.strokeStyle = "#059669";
   ctx.lineWidth = 1.8;
   ctx.strokeRect(ladderX, boxTop, boxWidth, boxHeight);
 
-  // 4 Corner Handles
   var arm = 15;
   ctx.lineWidth = 3.5;
   ctx.strokeStyle = "#059669";
-
   ctx.beginPath(); ctx.moveTo(ladderX - 2, boxTop + arm); ctx.lineTo(ladderX - 2, boxTop - 2); ctx.lineTo(ladderX + arm, boxTop - 2); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(boxRight + 2 - arm, boxTop - 2); ctx.lineTo(boxRight + 2, boxTop - 2); ctx.lineTo(boxRight + 2, boxTop + arm); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(ladderX - 2, boxTop + boxHeight - arm); ctx.lineTo(ladderX - 2, boxTop + boxHeight + 2); ctx.lineTo(ladderX + arm, boxTop + boxHeight + 2); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(boxRight + 2 - arm, boxTop + boxHeight + 2); ctx.lineTo(boxRight + 2, boxTop + boxHeight + 2); ctx.lineTo(boxRight + 2, boxTop + boxHeight - arm); ctx.stroke();
 
-  // Bottom Bearish Compressed Box
+  // Bearish Compressed Box
   ctx.strokeStyle = "#dc2626";
   ctx.lineWidth = 1.8;
   ctx.fillStyle = "rgba(220, 38, 38, 0.08)";
-  ctx.fillRect(ladderX, 580, boxWidth, 180);
-  ctx.strokeRect(ladderX, 580, boxWidth, 180);
+  ctx.fillRect(ladderX, 560, boxWidth, 180);
+  ctx.strokeRect(ladderX, 560, boxWidth, 180);
 
   requestAnimationFrame(render);
 }
 requestAnimationFrame(render);
 
-// Real-Time Ticker Fluctuations
+// Real-Time Ticker
 setInterval(function() {
   var bEl = document.getElementById("topBullCount");
   var rEl = document.getElementById("topBearCount");
@@ -622,7 +646,7 @@ setInterval(function() {
   }
 }, 3200);
 
-// --- MODAL POPUP: DETAILED ORDER BLOCK INTRADAY CHART ---
+// --- MODAL POPUP ---
 function openDetailModal(stock) {
   document.getElementById("mdlName").innerText = stock.name;
   document.getElementById("mdlSector").innerText = stock.sec + " SECTOR • 5M INTRADAY ORDER BLOCK";
@@ -647,16 +671,14 @@ function drawModalChart(stock) {
 
   g.clearRect(0, 0, w, h);
 
-  // Background Grid Lines
   g.strokeStyle = "#1e293b";
   g.lineWidth = 1;
   for (var y = 30; y < h; y += 40) {
     g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke();
   }
 
-  // Draw Intraday Area Curve
   var isBull = stock.type === "bull";
-  var base = isBull ? 210 : 60;
+  var base = isBull ? 200 : 60;
   var pts = [];
 
   for (var i = 0; i < 28; i++) {
@@ -667,9 +689,7 @@ function drawModalChart(stock) {
     pts.push({ x: x, y: base });
   }
 
-  // Highlight Morning Order Block Zone (9:45 AM - 10:15 AM)
   var obX1 = pts[6].x;
-  var obX2 = pts[11].x;
   var obY = pts[8].y - 12;
   var obH = 35;
 
@@ -679,12 +699,10 @@ function drawModalChart(stock) {
   g.lineWidth = 1.5;
   g.strokeRect(obX1, obY, w - obX1 - 20, obH);
 
-  // OB Text Banner
   g.fillStyle = "#ffffff";
   g.font = "bold 10px sans-serif";
   g.fillText(isBull ? "🎯 10:00 AM BUY ORDER BLOCK (SWEEP)" : "🎯 10:00 AM BREAKDOWN OB (CIRCUIT)", obX1 + 10, obY + 16);
 
-  // Trendline Curve
   g.beginPath();
   g.moveTo(pts[0].x, pts[0].y);
   for (var i = 1; i < pts.length; i++) {
@@ -693,15 +711,6 @@ function drawModalChart(stock) {
   g.strokeStyle = isBull ? "#10b981" : "#ef4444";
   g.lineWidth = 2.5;
   g.stroke();
-
-  // Price points
-  for (var i = 0; i < pts.length; i += 7) {
-    g.beginPath();
-    g.arc(pts[i].x, pts[i].y, 3, 0, Math.PI * 2);
-    g.fillStyle = "#ffffff";
-    g.fill();
-    g.stroke();
-  }
 }
 </script>
 </body>
