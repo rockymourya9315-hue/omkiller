@@ -11,13 +11,24 @@
     user-select: none; touch-action: none;
   }
 
-  /* Top Navbar */
   .top-navbar {
-    position: relative; z-index: 100; height: 44px;
+    position: relative; z-index: 100; height: 46px;
     display: flex; justify-content: space-between; align-items: center;
     padding: 0 16px; background: #ffffff; border-bottom: 1px solid #dce2e6;
   }
   .brand { font-size: 13px; font-weight: 700; color: #1e293b; letter-spacing: 0.5px; }
+
+  .regime-switch {
+    display: flex; background: #e2e8f0; border-radius: 6px; padding: 2px; gap: 2px;
+  }
+  .reg-btn {
+    border: none; background: transparent; padding: 3px 10px; font-size: 11px;
+    font-weight: 600; border-radius: 4px; cursor: pointer; color: #475569;
+  }
+  .reg-btn.active {
+    background: #ffffff; color: #0f172a; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+
   .stats-counter {
     display: flex; gap: 14px; font-size: 11px; font-weight: 700;
     background: #f8fafc; padding: 4px 12px; border-radius: 4px; border: 1px solid #e2e8f0;
@@ -25,7 +36,7 @@
   .bull-count { color: #059669; }
   .bear-count { color: #dc2626; }
 
-  /* Floating Zoom HUD */
+  /* Zoom Controller */
   .zoom-controls {
     position: fixed; bottom: 20px; right: 20px; z-index: 900;
     display: flex; flex-direction: column; gap: 8px;
@@ -38,62 +49,65 @@
   }
   .zoom-btn:active { background: #e2e8f0; }
 
-  /* Pan / Zoom Viewport */
+  /* Canvas Pan Layer */
   #pan-wrapper {
-    position: relative; width: 100vw; height: calc(100vh - 44px);
+    position: relative; width: 100vw; height: calc(100vh - 46px);
     overflow: hidden; touch-action: none;
   }
   #zoom-layer {
-    position: absolute; left: 0; top: 0; width: 1300px; height: 760px;
+    position: absolute; left: 0; top: 0; width: 1320px; height: 760px;
     transform-origin: 0 0; will-change: transform;
   }
 
-  #viewport { position: relative; width: 1300px; height: 760px; background: #f3f6f8; }
-  #flowCanvas { position: absolute; left: 0; top: 0; width: 1300px; height: 760px; z-index: 1; pointer-events: none; }
+  #viewport { position: relative; width: 1320px; height: 760px; background: #f3f6f8; }
+  #flowCanvas { position: absolute; left: 0; top: 0; width: 1320px; height: 760px; z-index: 1; pointer-events: none; }
 
-  /* Left Sector List Overlay */
+  /* Sectors Overlay */
   .sector-overlay {
-    position: absolute; left: 16px; top: 50px; width: 180px; z-index: 3;
-    display: flex; flex-direction: column; gap: 4px; pointer-events: auto;
+    position: absolute; left: 16px; top: 40px; width: 180px; z-index: 3;
+    display: flex; flex-direction: column; gap: 3.5px; pointer-events: auto;
   }
   .sec-row {
     display: flex; justify-content: space-between; align-items: center;
     background: rgba(255, 255, 255, 0.94); border: 1px solid #d1d5db; border-radius: 3px;
-    padding: 2px 6px; font-size: 10px; font-weight: 600; height: 22px; backdrop-filter: blur(2px);
+    padding: 2px 6px; font-size: 9.5px; font-weight: 600; height: 21px; backdrop-filter: blur(2px);
   }
   .sec-row .bar-wrap { width: 45px; height: 4px; background: #e2e8f0; border-radius: 2px; overflow: hidden; margin: 0 4px; }
   .sec-row .bar-fill { height: 100%; border-radius: 2px; }
 
-  /* Right Stock Pills */
+  /* Right Stock Cards */
   .stock-pill {
-    position: absolute; left: 1050px; width: 225px; height: 30px;
-    background: #ffffff; border-left: 4px solid #059669; border-radius: 4px;
+    position: absolute; left: 1050px; width: 235px; height: 32px;
+    background: #ffffff; border-left: 4.5px solid #059669; border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.08); padding: 3px 8px;
     display: flex; justify-content: space-between; align-items: center; font-size: 10.5px;
     cursor: pointer; transition: transform 0.15s, background-color 0.3s; z-index: 3;
   }
-  .stock-pill:hover { transform: translateX(3px); box-shadow: 0 3px 8px rgba(0,0,0,0.14); }
+  .stock-pill:hover { transform: translateX(4px); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
   .stock-pill.bear { border-left-color: #dc2626; }
   .flash-green { background-color: #ecfdf5 !important; }
   .flash-red { background-color: #fef2f2 !important; }
 
-  /* Popup Modal */
+  /* Professional Order Block Candlestick Chart Modal */
   .modal-backdrop {
-    display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6);
-    z-index: 999; justify-content: center; align-items: center; backdrop-filter: blur(3px);
+    display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65);
+    z-index: 999; justify-content: center; align-items: center; backdrop-filter: blur(4px);
   }
-  .modal-card {
-    background: #ffffff; border-radius: 8px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
-    width: 420px; padding: 18px; border: 1px solid #cbd5e1;
+  .chart-window {
+    background: #ffffff; border-radius: 10px; box-shadow: 0 20px 35px -5px rgba(0,0,0,0.3);
+    width: 640px; max-width: 95vw; padding: 18px; border: 1px solid #cbd5e1;
   }
-  .close-btn { float: right; font-size: 18px; border: none; background: none; cursor: pointer; color: #64748b; }
-  .ob-alert {
-    background: #ecfdf5; border: 1px dashed #059669; border-radius: 4px;
-    padding: 8px; font-size: 11px; color: #065f46; margin: 12px 0;
+  .chart-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+  .close-btn { font-size: 20px; border: none; background: none; cursor: pointer; color: #64748b; }
+
+  #chartCanvas {
+    width: 100%; height: 260px; background: #0f172a; border-radius: 6px;
+    display: block; margin: 10px 0;
   }
-  .metrics-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
-    background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px; border-radius: 4px; font-size: 10.5px;
+
+  .ob-status-bar {
+    display: flex; justify-content: space-between; background: #f8fafc;
+    border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 12px; font-size: 11px;
   }
 </style>
 </head>
@@ -101,9 +115,16 @@
 
 <div class="top-navbar">
   <div class="brand">ORDER BLOCK • LIQUIDITY ARCHITECTURE</div>
+
+  <div class="regime-switch">
+    <button class="reg-btn active" id="btnLive" onclick="setRegime('live')">LIVE AUTO</button>
+    <button class="reg-btn" id="btnBear" onclick="setRegime('bear')">BEARISH CRASH</button>
+    <button class="reg-btn" id="btnBull" onclick="setRegime('bull')">BULL RUN</button>
+  </div>
+
   <div class="stats-counter">
-    <div>BULLISH <span class="bull-count" id="bullCounter">172</span></div>
-    <div>BEARISH <span class="bear-count" id="bearCounter">41</span></div>
+    <div>BULLISH <span class="bull-count" id="bullCounter">169</span></div>
+    <div>BEARISH <span class="bear-count" id="bearCounter">44</span></div>
   </div>
 </div>
 
@@ -116,39 +137,42 @@
 <div id="pan-wrapper">
   <div id="zoom-layer">
     <div id="viewport">
-      <canvas id="flowCanvas" width="1300" height="760"></canvas>
+      <canvas id="flowCanvas" width="1320" height="760"></canvas>
       <div class="sector-overlay" id="sectorContainer"></div>
       <div id="cardsLayer"></div>
     </div>
   </div>
 </div>
 
+<!-- CANDLESTICK ORDER BLOCK MODAL -->
 <div class="modal-backdrop" id="modalBackdrop">
-  <div class="modal-card">
-    <button class="close-btn" onclick="closeModal()">✕</button>
-    <div style="font-size: 15px; font-weight: 700; color:#0f172a;" id="mStock">STOCK</div>
-    <div style="font-size: 11px; color: #64748b; margin-bottom: 6px;" id="mSector">SECTOR</div>
-    <div style="font-size: 22px; font-weight: 800; color:#059669;" id="mPrice">₹0.00</div>
-    <div style="font-size: 11px; font-weight: 700;" id="mPct">+0.00%</div>
-    
-    <div class="ob-alert">
-      <strong>🎯 ORDER BLOCK DETECTED:</strong> <span id="mZone">Pullback Zone</span><br>
-      Status: <span style="font-weight: 700;">Institutional Liquidity Detected</span>
+  <div class="chart-window">
+    <div class="chart-header">
+      <div>
+        <div style="font-size: 16px; font-weight: 800; color:#0f172a;" id="cStock">HEROMOTOCO</div>
+        <div style="font-size: 11px; color:#64748b;" id="cSector">AUTO SECTOR • 5M INTRADAY</div>
+      </div>
+      <div style="text-align: right;">
+        <div style="font-size: 20px; font-weight: 800;" id="cPrice">₹4,280.00</div>
+        <div style="font-size: 11px; font-weight: 700;" id="cPct">-5.20% LOWER CIRCUIT</div>
+      </div>
+      <button class="close-btn" onclick="closeChart()">✕</button>
     </div>
 
-    <div class="metrics-grid">
-      <div>VWAP: <b id="mVwap" style="color:#0f172a;">0.00</b></div>
-      <div>CONV: <b style="color:#059669;">98/100</b></div>
-      <div>OI SURGE: <b style="color:#059669;" id="mOi">+18.4%</b></div>
-      <div>SUP 1: <b id="mSup">0.00</b></div>
-      <div>RES 1: <b id="mRes">0.00</b></div>
-      <div>BIAS: <b style="color:#059669;" id="mBias">BULLISH</b></div>
+    <!-- Live Candlestick & Order Block Drawing Canvas -->
+    <canvas id="chartCanvas" width="600" height="260"></canvas>
+
+    <div class="ob-status-bar">
+      <div>ZONE: <b id="cZone" style="color:#dc2626;">BEARISH BREAKDOWN OB</b></div>
+      <div>SWEEP: <b style="color:#0f172a;">SELL SIDE LIQUIDITY</b></div>
+      <div>CONVICTION: <b style="color:#059669;">94% INSTITUTIONAL</b></div>
+      <div>VWAP: <b id="cVwap">0.00</b></div>
     </div>
   </div>
 </div>
 
 <script>
-// --- SMOOTH PAN / ZOOM ENGINE ---
+// --- PAN & ZOOM ENGINE ---
 var scale = 0.82;
 var panX = 10, panY = 10;
 var isPanning = false, startX = 0, startY = 0;
@@ -173,25 +197,19 @@ panWrapper.addEventListener('touchstart', function(e) {
     startY = e.touches[0].clientY - panY;
   } else if (e.touches.length === 2) {
     isPanning = false;
-    initialDistance = Math.hypot(
-      e.touches[0].clientX - e.touches[1].clientX,
-      e.touches[0].clientY - e.touches[1].clientY
-    );
+    initialDistance = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
     initialScale = scale;
   }
 }, { passive: false });
 
 panWrapper.addEventListener('touchmove', function(e) {
-  e.preventDefault(); // Prevents page from jumping or wobbling vertically
+  e.preventDefault();
   if (e.touches.length === 1 && isPanning) {
     panX = e.touches[0].clientX - startX;
     panY = e.touches[0].clientY - startY;
     updateTransform();
   } else if (e.touches.length === 2 && initialDistance > 0) {
-    var dist = Math.hypot(
-      e.touches[0].clientX - e.touches[1].clientX,
-      e.touches[0].clientY - e.touches[1].clientY
-    );
+    var dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
     scale = initialScale * (dist / initialDistance);
     updateTransform();
   }
@@ -200,7 +218,26 @@ panWrapper.addEventListener('touchmove', function(e) {
 panWrapper.addEventListener('touchend', function() { isPanning = false; initialDistance = 0; });
 panWrapper.addEventListener('wheel', function(e) { e.preventDefault(); scale += e.deltaY * -0.001; updateTransform(); }, { passive: false });
 
-// --- DATA DEFINITIONS ---
+// --- DYNAMIC STOCK UNIVERSE ---
+var allStocks = [
+  // Heavy Crash / Bearish stocks including Hero MotoCorp
+  { id: "hero", name: "HEROMOTOCO", sec: "AUTO", pct: -5.18, price: 4210.00, vwap: "4,290.00", sup: "4,150.00", res: "4,320.00", type: "bear" },
+  { id: "anand", name: "ANANDRATHI", sec: "FINANCE", pct: -4.68, price: 2038.20, vwap: "2,090.00", sup: "2,010.00", res: "2,080.00", type: "bear" },
+  { id: "mphasis", name: "MPHASIS", sec: "IT", pct: -2.14, price: 2610.00, vwap: "2,650.00", sup: "2,580.00", res: "2,640.00", type: "bear" },
+  { id: "coforge", name: "COFORGE", sec: "IT", pct: -1.85, price: 7450.00, vwap: "7,520.00", sup: "7,380.00", res: "7,510.00", type: "bear" },
+  { id: "tatamot", name: "TATAMOTORS", sec: "AUTO", pct: -1.65, price: 924.50, vwap: "935.00", sup: "910.00", res: "945.00", type: "bear" },
+  { id: "itc", name: "ITC", sec: "FMCG", pct: -1.22, price: 486.00, vwap: "492.00", sup: "482.00", res: "495.00", type: "bear" },
+
+  // Bullish Stocks
+  { id: "eicher", name: "EICHERMOT", sec: "AUTO", pct: 4.17, price: 7058.00, vwap: "7,015.20", sup: "7,001.00", res: "7,088.00", type: "bull" },
+  { id: "inox", name: "INOXWIND", sec: "ENERGY", pct: 6.76, price: 142.10, vwap: "136.50", sup: "138.00", res: "146.00", type: "bull" },
+  { id: "tcs", name: "TCS", sec: "IT", pct: 3.92, price: 4120.00, vwap: "4,070.00", sup: "4,050.00", res: "4,160.00", type: "bull" },
+  { id: "auro", name: "AUROPHARMA", sec: "PHARMA", pct: 2.85, price: 1245.00, vwap: "1,228.00", sup: "1,220.00", res: "1,260.00", type: "bull" },
+  { id: "tvs", name: "TVSMOTOR", sec: "AUTO", pct: 2.48, price: 2480.00, vwap: "2,460.00", sup: "2,450.00", res: "2,510.00", type: "bull" },
+  { id: "fed", name: "FEDERALBNK", sec: "FINANCE", pct: 2.11, price: 192.50, vwap: "189.20", sup: "188.00", res: "195.00", type: "bull" },
+  { id: "bel", name: "BEL", sec: "DEFENCE", pct: 3.10, price: 298.00, vwap: "292.00", sup: "288.00", res: "305.00", type: "bull" }
+];
+
 var sectors = [
   { id: "s1", name: "IT", pct: 2.87, type: "bull", val: 85 },
   { id: "s2", name: "LOGISTICS", pct: 2.41, type: "bull", val: 80 },
@@ -218,7 +255,7 @@ var sectors = [
   { id: "s14", name: "TELECOM", pct: 1.21, type: "bull", val: 40 },
   { id: "s15", name: "REALTY", pct: 1.17, type: "bull", val: 38 },
   { id: "s16", name: "DEFENCE", pct: 1.16, type: "bull", val: 37 },
-  { id: "s17", name: "AUTO", pct: 1.15, type: "bull", val: 36 },
+  { id: "s17", name: "AUTO", pct: -2.35, type: "bear", val: 70 }, // Auto crashing due to Hero / Tata Motors
   { id: "s18", name: "CAP GOODS", pct: 0.77, type: "bull", val: 28 },
   { id: "s19", name: "CONSUMER", pct: 0.71, type: "bull", val: 24 },
   { id: "s20", name: "CAP MKTS", pct: 0.52, type: "bull", val: 18 },
@@ -227,127 +264,157 @@ var sectors = [
   { id: "s23", name: "ENERGY", pct: -1.12, type: "bear", val: 40 }
 ];
 
-var topStocks = [
-  { id: "c1", name: "EICHERMOT", sec: "AUTO", pct: 4.17, price: 7058.00, vwap: "7,015.20", sup: "7,001.00", res: "7,088.00", type: "bull", y: 35 },
-  { id: "c2", name: "TVSMOTOR", sec: "AUTO", pct: 2.48, price: 2480.00, vwap: "2,460.00", sup: "2,450.00", res: "2,510.00", type: "bull", y: 78 },
-  { id: "c3", name: "INOXWIND", sec: "ENERGY", pct: 6.76, price: 142.10, vwap: "136.50", sup: "138.00", res: "146.00", type: "bull", y: 121 },
-  { id: "c4", name: "TCS", sec: "IT", pct: 3.92, price: 4120.00, vwap: "4,070.00", sup: "4,050.00", res: "4,160.00", type: "bull", y: 164 },
-  { id: "c5", name: "AUROPHARMA", sec: "PHARMA", pct: 2.85, price: 1245.00, vwap: "1,228.00", sup: "1,220.00", res: "1,260.00", type: "bull", y: 207 },
-  { id: "c6", name: "FEDERALBNK", sec: "FINANCE", pct: 2.11, price: 192.50, vwap: "189.20", sup: "188.00", res: "195.00", type: "bull", y: 250 },
-  { id: "c7", name: "TATAMOTORS", sec: "AUTO", pct: 1.95, price: 965.00, vwap: "958.00", sup: "950.00", res: "978.00", type: "bull", y: 293 },
-  { id: "c8", name: "ANANDRATHI", sec: "FINANCE", pct: -4.68, price: 2038.20, vwap: "2,090.00", sup: "2,010.00", res: "2,080.00", type: "bear", y: 550 },
-  { id: "c9", name: "MPHASIS", sec: "IT", pct: -2.14, price: 2610.00, vwap: "2,650.00", sup: "2,580.00", res: "2,640.00", type: "bear", y: 593 },
-  { id: "c10", name: "COFORGE", sec: "IT", pct: -1.85, price: 7450.00, vwap: "7,520.00", sup: "7,380.00", res: "7,510.00", type: "bear", y: 636 }
-];
+var currentRegime = "live";
+var displayStocks = [];
 
+function refreshDisplayStocks() {
+  if (currentRegime === "bear") {
+    // Bearish crash layout: Hero MotoCorp on Top priority breakdown
+    displayStocks = [
+      { ...allStocks[0], y: 35 },  // HEROMOTOCO
+      { ...allStocks[1], y: 78 },  // ANANDRATHI
+      { ...allStocks[2], y: 121 }, // MPHASIS
+      { ...allStocks[3], y: 164 }, // COFORGE
+      { ...allStocks[4], y: 207 }, // TATAMOTORS
+      { ...allStocks[5], y: 250 }, // ITC
+      // Small bottom bullish
+      { ...allStocks[6], y: 550 },
+      { ...allStocks[7], y: 593 },
+      { ...allStocks[8], y: 636 }
+    ];
+    document.getElementById("bullCounter").innerText = "38";
+    document.getElementById("bearCounter").innerText = "175";
+  } else {
+    // Normal / Live setup with Hero MotoCorp in Bearish Break block
+    displayStocks = [
+      { ...allStocks[6], y: 35 },  // EICHERMOT
+      { ...allStocks[7], y: 78 },  // INOXWIND
+      { ...allStocks[8], y: 121 }, // TCS
+      { ...allStocks[9], y: 164 }, // AUROPHARMA
+      { ...allStocks[10], y: 207 },// TVSMOTOR
+      { ...allStocks[11], y: 250 },// FEDERALBNK
+      { ...allStocks[12], y: 293 },// BEL
+      // Bearish bottom blocks
+      { ...allStocks[0], y: 550 }, // HEROMOTOCO Lower Circuit Block!
+      { ...allStocks[1], y: 593 }, // ANANDRATHI
+      { ...allStocks[2], y: 636 }  // MPHASIS
+    ];
+    document.getElementById("bullCounter").innerText = "169";
+    document.getElementById("bearCounter").innerText = "44";
+  }
+  buildCardsDOM();
+  buildFlowTracks();
+}
+
+function setRegime(reg) {
+  currentRegime = reg;
+  document.getElementById("btnLive").className = "reg-btn " + (reg === 'live' ? 'active' : '');
+  document.getElementById("btnBear").className = "reg-btn " + (reg === 'bear' ? 'active' : '');
+  document.getElementById("btnBull").className = "reg-btn " + (reg === 'bull' ? 'active' : '');
+  refreshDisplayStocks();
+}
+
+// Build Sectors DOM
 var sectorStartYs = [];
 var secContainer = document.getElementById("sectorContainer");
-
 for (var i = 0; i < sectors.length; i++) {
   var s = sectors[i];
   var div = document.createElement("div");
   div.className = "sec-row";
-  div.id = "sec-el-" + s.id;
   var color = s.type === "bull" ? "#059669" : "#dc2626";
   var sign = s.pct >= 0 ? "+" : "";
   div.innerHTML = '<span style="color:#334155;">' + s.name + '</span>' +
-                  '<div class="bar-wrap"><div class="bar-fill" id="bar-' + s.id + '" style="width:' + s.val + '%; background:' + color + ';"></div></div>' +
-                  '<span style="color:' + color + ';" id="pct-' + s.id + '">' + sign + s.pct.toFixed(2) + '%</span>';
+                  '<div class="bar-wrap"><div class="bar-fill" style="width:' + s.val + '%; background:' + color + ';"></div></div>' +
+                  '<span style="color:' + color + ';">' + sign + s.pct.toFixed(2) + '%</span>';
   secContainer.appendChild(div);
-
-  // Exact vertical center for sector rows
-  var actualY = 50 + i * 26 + 11;
-  sectorStartYs.push({ y: actualY, type: s.type });
+  sectorStartYs.push({ y: 40 + i * 24.5 + 10, type: s.type });
 }
 
-var cardsLayer = document.getElementById("cardsLayer");
-for (var j = 0; j < topStocks.length; j++) {
-  (function(stk) {
-    var card = document.createElement("div");
-    card.className = "stock-pill " + stk.type;
-    card.id = "card-el-" + stk.id;
-    card.style.top = stk.y + "px";
-    card.onclick = function() { openModal(stk); };
-    var color = stk.type === "bull" ? "#059669" : "#dc2626";
-    var sign = stk.pct >= 0 ? "+" : "";
-    card.innerHTML = '<div><div style="font-weight:700; color:#0f172a;">' + stk.name + '</div>' +
-                     '<div style="font-size:9.5px; color:#64748b;" id="price-' + stk.id + '">₹' + stk.price.toFixed(2) + ' • ' + stk.sec + '</div></div>' +
-                     '<div style="text-align:right;"><div style="font-weight:700; color:' + color + ';" id="pct-' + stk.id + '">' + sign + stk.pct.toFixed(2) + '%</div>' +
-                     '<div style="font-size:8.5px; color:' + color + '; font-weight:600;">' + (stk.type === 'bull' ? 'BUY BLOCK' : 'SELL BLOCK') + '</div></div>';
-    cardsLayer.appendChild(card);
-  })(topStocks[j]);
+function buildCardsDOM() {
+  var cardsLayer = document.getElementById("cardsLayer");
+  cardsLayer.innerHTML = "";
+  for (var j = 0; j < displayStocks.length; j++) {
+    (function(stk) {
+      var card = document.createElement("div");
+      card.className = "stock-pill " + stk.type;
+      card.id = "card-el-" + stk.id;
+      card.style.top = stk.y + "px";
+      card.onclick = function() { openInteractiveChart(stk); };
+      var color = stk.type === "bull" ? "#059669" : "#dc2626";
+      var sign = stk.pct >= 0 ? "+" : "";
+      var tag = stk.type === "bull" ? "BUY OB" : (stk.pct < -4 ? "LOWER CIRCUIT" : "SELL OB");
+      card.innerHTML = '<div><div style="font-weight:700; color:#0f172a;">' + stk.name + '</div>' +
+                       '<div style="font-size:9px; color:#64748b;">₹' + stk.price.toFixed(2) + ' • ' + stk.sec + '</div></div>' +
+                       '<div style="text-align:right;"><div style="font-weight:700; color:' + color + ';">' + sign + stk.pct.toFixed(2) + '%</div>' +
+                       '<div style="font-size:8px; color:' + color + '; font-weight:700;">' + tag + '</div></div>';
+      cardsLayer.appendChild(card);
+    })(displayStocks[j]);
+  }
 }
 
-// --- CANVAS ENGINE ---
+// --- CANVAS FLOW ENGINE ---
 var canvas = document.getElementById("flowCanvas");
 var ctx = canvas.getContext("2d");
-
 var ladderX = 820;
 var boxWidth = 150;
-var boxRight = ladderX + boxWidth; // 970px
+var boxRight = ladderX + boxWidth;
 var cardSnapX = 1050;
 
 var inTracks = [];
 var outTracks = [];
-
-// 1. INFLOW: Har sector ke exact right edge (X: 196) se line niklegi
-// Bullish sectors (indices 0 to 20)
-for (var i = 0; i < 21; i++) {
-  var sec = sectorStartYs[i];
-  for (var k = 0; k < 9; k++) {
-    var targetY = 32 + Math.pow(Math.random(), 1.5) * 340;
-    inTracks.push({
-      p0: [196, sec.y],
-      p1: [320 + Math.random() * 80, sec.y + (targetY - sec.y) * 0.12],
-      p2: [540 + Math.random() * 100, targetY + 15],
-      p3: [ladderX, targetY],
-      type: "bull",
-      width: Math.random() * 0.5 + 0.5
-    });
-  }
-}
-
-// Bearish sectors (strictly Media & Energy rows)
-for (var i = 21; i < 23; i++) {
-  var sec = sectorStartYs[i];
-  for (var k = 0; k < 12; k++) {
-    var targetY = 550 + Math.random() * 125;
-    inTracks.push({
-      p0: [196, sec.y],
-      p1: [360, sec.y],
-      p2: [620, targetY],
-      p3: [ladderX, targetY],
-      type: "bear",
-      width: 0.6
-    });
-  }
-}
-
-// 2. OUTFLOW: Choda Box se nikal kar exact card left border par snap
-for (var i = 0; i < topStocks.length; i++) {
-  var stk = topStocks[i];
-  var destY = stk.y + 15; // Card center
-  for (var k = 0; k < 3; k++) {
-    var srcY = stk.type === "bull" ? (35 + Math.random() * 320) : (555 + Math.random() * 115);
-    outTracks.push({
-      p0: [boxRight, srcY],
-      p1: [boxRight + 30, srcY],
-      p2: [cardSnapX - 30, destY],
-      p3: [cardSnapX, destY],
-      type: stk.type,
-      width: 0.8
-    });
-  }
-}
-
 var inPulses = [];
-for (var i = 0; i < inTracks.length; i++) {
-  inPulses.push({ trackIndex: i, t: Math.random(), speed: 0.003 + Math.random() * 0.0025, len: 0.12 + Math.random() * 0.08 });
-}
-
 var outPulses = [];
-for (var i = 0; i < outTracks.length; i++) {
-  outPulses.push({ trackIndex: i, t: Math.random(), speed: 0.0035 + Math.random() * 0.002, len: 0.18 + Math.random() * 0.06 });
+
+function buildFlowTracks() {
+  inTracks = [];
+  outTracks = [];
+
+  var isBearMarket = (currentRegime === "bear");
+
+  // Inflow Web
+  for (var i = 0; i < sectorStartYs.length; i++) {
+    var sec = sectorStartYs[i];
+    var count = sec.type === "bull" ? (isBearMarket ? 4 : 10) : (isBearMarket ? 12 : 5);
+    for (var k = 0; k < count; k++) {
+      var targetY = sec.type === "bull" 
+        ? (32 + Math.pow(Math.random(), 1.5) * 340)
+        : (545 + Math.random() * 135);
+      
+      inTracks.push({
+        p0: [196, sec.y],
+        p1: [320 + Math.random() * 80, sec.y + (targetY - sec.y) * 0.12],
+        p2: [540 + Math.random() * 100, targetY + 15],
+        p3: [ladderX, targetY],
+        type: sec.type,
+        width: Math.random() * 0.5 + 0.5
+      });
+    }
+  }
+
+  // Outflow Connections (All cards connect accurately)
+  for (var i = 0; i < displayStocks.length; i++) {
+    var stk = displayStocks[i];
+    var destY = stk.y + 16;
+    for (var k = 0; k < 3; k++) {
+      var srcY = stk.type === "bull" ? (35 + Math.random() * 320) : (550 + Math.random() * 125);
+      outTracks.push({
+        p0: [boxRight, srcY],
+        p1: [boxRight + 30, srcY],
+        p2: [cardSnapX - 30, destY],
+        p3: [cardSnapX, destY],
+        type: stk.type,
+        width: 0.8
+      });
+    }
+  }
+
+  inPulses = inTracks.map(function(tr, idx) {
+    return { trackIndex: idx, t: Math.random(), speed: 0.003 + Math.random() * 0.002, len: 0.13 };
+  });
+
+  outPulses = outTracks.map(function(tr, idx) {
+    return { trackIndex: idx, t: Math.random(), speed: 0.0035 + Math.random() * 0.002, len: 0.18 };
+  });
 }
 
 function getPoint(p0, p1, p2, p3, t) {
@@ -362,39 +429,8 @@ function getPoint(p0, p1, p2, p3, t) {
   ];
 }
 
-var topDots = [];
-for (var i = 0; i < 90; i++) {
-  topDots.push({
-    x: 420 + Math.random() * 440,
-    y: 18 + (Math.random() * 16 - 8),
-    type: Math.random() > 0.25 ? "bull" : "bear"
-  });
-}
-
 function render() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // Top Breadth Scatter Meter
-  ctx.fillStyle = "rgba(203, 213, 225, 0.4)";
-  ctx.fillRect(400, 16, 470, 2);
-  for (var i = 0; i < topDots.length; i++) {
-    var d = topDots[i];
-    ctx.beginPath();
-    ctx.arc(d.x, d.y + (d.type === 'bull' ? -3 : 5), 1.8, 0, Math.PI * 2);
-    ctx.fillStyle = d.type === 'bull' ? "rgba(5, 150, 105, 0.7)" : "rgba(220, 38, 38, 0.7)";
-    ctx.fill();
-  }
-
-  // Reference Levels
-  var lvls = [120, 280, 480, 640];
-  for (var i = 0; i < lvls.length; i++) {
-    ctx.beginPath();
-    ctx.moveTo(196, lvls[i]);
-    ctx.lineTo(ladderX + boxWidth, lvls[i]);
-    ctx.strokeStyle = "rgba(59, 130, 246, 0.35)";
-    ctx.lineWidth = 1;
-    ctx.stroke();
-  }
 
   // Inflow Tracks
   for (var i = 0; i < inTracks.length; i++) {
@@ -413,17 +449,15 @@ function render() {
     ctx.beginPath();
     ctx.moveTo(tr.p0[0], tr.p0[1]);
     ctx.bezierCurveTo(tr.p1[0], tr.p1[1], tr.p2[0], tr.p2[1], tr.p3[0], tr.p3[1]);
-    ctx.strokeStyle = tr.type === "bull" ? "rgba(5, 150, 105, 0.35)" : "rgba(220, 38, 38, 0.32)";
+    ctx.strokeStyle = tr.type === "bull" ? "rgba(5, 150, 105, 0.35)" : "rgba(220, 38, 38, 0.35)";
     ctx.lineWidth = tr.width;
     ctx.stroke();
   }
 
-  // Inflow Pulses
+  // Moving Pulses
   for (var i = 0; i < inPulses.length; i++) {
     var pt = inPulses[i];
-    pt.t += pt.speed;
-    if (pt.t > 1) pt.t = 0;
-
+    pt.t += pt.speed; if (pt.t > 1) pt.t = 0;
     var tr = inTracks[pt.trackIndex];
     var head = getPoint(tr.p0, tr.p1, tr.p2, tr.p3, pt.t);
     var tail = getPoint(tr.p0, tr.p1, tr.p2, tr.p3, Math.max(0, pt.t - pt.len));
@@ -440,12 +474,9 @@ function render() {
     ctx.stroke();
   }
 
-  // Outflow Pulses
   for (var i = 0; i < outPulses.length; i++) {
     var pt = outPulses[i];
-    pt.t += pt.speed;
-    if (pt.t > 1) pt.t = 0;
-
+    pt.t += pt.speed; if (pt.t > 1) pt.t = 0;
     var tr = outTracks[pt.trackIndex];
     var head = getPoint(tr.p0, tr.p1, tr.p2, tr.p3, pt.t);
     var tail = getPoint(tr.p0, tr.p1, tr.p2, tr.p3, Math.max(0, pt.t - pt.len));
@@ -475,108 +506,117 @@ function render() {
     ctx.stroke();
   }
 
-  // Choda Scanner Box
-  var boxTop = 28;
-  var boxHeight = 340;
+  // Bullish Box
   ctx.fillStyle = "rgba(5, 150, 105, 0.08)";
-  ctx.fillRect(ladderX, boxTop, boxWidth, boxHeight);
+  ctx.fillRect(ladderX, 28, boxWidth, 340);
   ctx.strokeStyle = "#059669";
   ctx.lineWidth = 1.8;
-  ctx.strokeRect(ladderX, boxTop, boxWidth, boxHeight);
-
-  // Corner Handles
-  var arm = 14;
-  ctx.lineWidth = 3.5;
-  ctx.strokeStyle = "#059669";
-  
-  ctx.beginPath();
-  ctx.moveTo(ladderX - 2, boxTop + arm);
-  ctx.lineTo(ladderX - 2, boxTop - 2);
-  ctx.lineTo(ladderX + arm, boxTop - 2);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(boxRight + 2 - arm, boxTop - 2);
-  ctx.lineTo(boxRight + 2, boxTop - 2);
-  ctx.lineTo(boxRight + 2, boxTop + arm);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(ladderX - 2, boxTop + boxHeight - arm);
-  ctx.lineTo(ladderX - 2, boxTop + boxHeight + 2);
-  ctx.lineTo(ladderX + arm, boxTop + boxHeight + 2);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(boxRight + 2 - arm, boxTop + boxHeight + 2);
-  ctx.lineTo(boxRight + 2, boxTop + boxHeight + 2);
-  ctx.lineTo(boxRight + 2, boxTop + boxHeight - arm);
-  ctx.stroke();
+  ctx.strokeRect(ladderX, 28, boxWidth, 340);
 
   // Bearish Box
   ctx.strokeStyle = "#dc2626";
   ctx.lineWidth = 1.8;
-  ctx.fillStyle = "rgba(220, 38, 38, 0.06)";
+  ctx.fillStyle = "rgba(220, 38, 38, 0.08)";
   ctx.fillRect(ladderX, 540, boxWidth, 140);
   ctx.strokeRect(ladderX, 540, boxWidth, 140);
 
   requestAnimationFrame(render);
 }
+
+refreshDisplayStocks();
 requestAnimationFrame(render);
 
-// Real-Time Numbers Ticker
-var currentBull = 172;
-var currentBear = 41;
-
-setInterval(function() {
-  var delta = Math.floor(Math.random() * 5) - 2;
-  currentBull = Math.min(Math.max(145, currentBull + delta), 185);
-  currentBear = 213 - currentBull;
-
-  var bEl = document.getElementById("bullCounter");
-  var rEl = document.getElementById("bearCounter");
-  if (bEl && rEl) {
-    bEl.innerText = currentBull;
-    rEl.innerText = currentBear;
-  }
-
-  var randomStk = topStocks[Math.floor(Math.random() * topStocks.length)];
-  var pctDelta = (Math.random() * 0.16 - 0.08);
-  randomStk.pct += pctDelta;
-  randomStk.price += (randomStk.price * (pctDelta / 100));
-
-  var cardEl = document.getElementById("card-el-" + randomStk.id);
-  var priceEl = document.getElementById("price-" + randomStk.id);
-  if (priceEl && cardEl) {
-    priceEl.innerText = "₹" + randomStk.price.toFixed(2) + " • " + randomStk.sec;
-    cardEl.classList.add(pctDelta >= 0 ? "flash-green" : "flash-red");
-    setTimeout(function() { cardEl.classList.remove("flash-green", "flash-red"); }, 400);
-  }
-
-  for (var i = 0; i < topDots.length; i++) {
-    if (Math.random() > 0.6) topDots[i].x += (Math.random() * 4 - 2);
-  }
-}, 3200);
-
-// Modal Helpers
-function openModal(stk) {
-  document.getElementById("mStock").innerText = stk.name;
-  document.getElementById("mSector").innerText = stk.sec + " SECTOR";
-  document.getElementById("mPrice").innerText = "₹" + stk.price.toFixed(2);
-  var p = document.getElementById("mPct");
+// --- INTERACTIVE CANDLESTICK & ORDER BLOCK RENDERER ---
+function openInteractiveChart(stk) {
+  document.getElementById("cStock").innerText = stk.name;
+  document.getElementById("cSector").innerText = stk.sec + " SECTOR • LIVE ORDER BLOCK SCANNER";
+  document.getElementById("cPrice").innerText = "₹" + stk.price.toFixed(2);
+  
   var sign = stk.pct >= 0 ? "+" : "";
-  p.innerText = sign + stk.pct.toFixed(2) + "%";
-  p.style.color = stk.type === "bull" ? "#059669" : "#dc2626";
-  document.getElementById("mVwap").innerText = stk.vwap;
-  document.getElementById("mSup").innerText = stk.sup;
-  document.getElementById("mRes").innerText = stk.res;
-  document.getElementById("mOi").innerText = stk.type === "bull" ? "+18.4%" : "-14.2%";
-  document.getElementById("mBias").innerText = stk.type === "bull" ? "BULLISH" : "BEARISH";
-  document.getElementById("mBias").style.color = stk.type === "bull" ? "#059669" : "#dc2626";
+  var pEl = document.getElementById("cPct");
+  pEl.innerText = sign + stk.pct.toFixed(2) + "% " + (stk.type === "bull" ? "ACCUMULATION" : "DISTRIBUTION / BREAKDOWN");
+  pEl.style.color = stk.type === "bull" ? "#059669" : "#dc2626";
+  document.getElementById("cZone").innerText = stk.type === "bull" ? "BULLISH DEMAND OB (FVG)" : "BEARISH SUPPLY BREAKDOWN OB";
+  document.getElementById("cZone").style.color = stk.type === "bull" ? "#059669" : "#dc2626";
+  document.getElementById("cVwap").innerText = stk.vwap;
+
   document.getElementById("modalBackdrop").style.display = "flex";
+  drawLiveCandlestickChart(stk);
 }
-function closeModal() {
+
+function closeChart() {
   document.getElementById("modalBackdrop").style.display = "none";
+}
+
+function drawLiveCandlestickChart(stk) {
+  var c = document.getElementById("chartCanvas");
+  var g = c.getContext("2d");
+  var w = c.width;
+  var h = c.height;
+
+  g.clearRect(0, 0, w, h);
+
+  // Grid
+  g.strokeStyle = "#1e293b";
+  g.lineWidth = 1;
+  for (var y = 30; y < h; y += 40) {
+    g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke();
+  }
+
+  // Draw 24 simulated candles
+  var isBull = stk.type === "bull";
+  var basePrice = 140;
+  var candleW = 14;
+  var gap = 24;
+
+  for (var i = 0; i < 22; i++) {
+    var cx = 35 + i * gap;
+    var trend = isBull ? (i > 14 ? -1.2 : 0.8) : (i > 10 ? 1.8 : -0.5); // Fall down for bearish
+    basePrice += (Math.random() * 8 - 4) + trend * 3;
+    
+    var open = basePrice;
+    var close = open + (Math.random() * 14 - 7);
+    var high = Math.max(open, close) + Math.random() * 5;
+    var low = Math.min(open, close) - Math.random() * 5;
+
+    var isGreen = close >= open;
+    g.strokeStyle = isGreen ? "#10b981" : "#ef4444";
+    g.fillStyle = isGreen ? "#10b981" : "#ef4444";
+
+    // Wick
+    g.beginPath();
+    g.moveTo(cx + candleW / 2, high);
+    g.lineTo(cx + candleW / 2, low);
+    g.stroke();
+
+    // Body
+    g.fillRect(cx, Math.min(open, close), candleW, Math.max(2, Math.abs(close - open)));
+
+    // Highlight Exact Order Block on 8th to 12th candle
+    if (i === 11) {
+      g.fillStyle = isBull ? "rgba(16, 185, 129, 0.25)" : "rgba(239, 68, 68, 0.25)";
+      g.strokeStyle = isBull ? "#10b981" : "#ef4444";
+      g.lineWidth = 1.5;
+      var obTop = Math.min(open, close) - 4;
+      var obHeight = 28;
+      g.fillRect(cx - 10, obTop, w - cx, obHeight);
+      g.strokeRect(cx - 10, obTop, w - cx, obHeight);
+
+      // Label
+      g.fillStyle = "#ffffff";
+      g.font = "bold 10px sans-serif";
+      g.fillText(isBull ? "INSTITUTIONAL BUY ORDER BLOCK" : "INSTITUTIONAL SELL ORDER BLOCK (CIRCUIT)", cx, obTop - 6);
+    }
+  }
+
+  // Current Price Line
+  g.strokeStyle = "#388bfd";
+  g.setLineDash([4, 4]);
+  g.beginPath();
+  g.moveTo(0, basePrice);
+  g.lineTo(w, basePrice);
+  g.stroke();
+  g.setLineDash([]);
 }
 </script>
 </body>
