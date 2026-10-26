@@ -1,7 +1,7 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-st.set_page_config(page_title="Order Block Liquidity", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Order Block Liquidity Flow", layout="wide", initial_sidebar_state="collapsed")
 
 st.markdown("""
 <style>
@@ -13,4 +13,4 @@ st.markdown("""
 with open("index.html", "r", encoding="utf-8") as f:
     html_content = f.read()
 
-components.html(html_content, height=840, scrolling=False)
+components.html(html_content, height=880, scrolling=False)
