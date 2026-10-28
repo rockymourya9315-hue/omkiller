@@ -2,123 +2,125 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
   html, body {
     background-color: #f3f6f8; color: #0f172a;
-    width: 100%; height: 100%; overflow: auto;
+    width: 100%; height: 100%; overflow-x: auto; overflow-y: hidden;
+    user-select: none; -webkit-tap-highlight-color: transparent;
   }
 
-  /* Header */
+  /* Top Header */
   .top-header {
-    position: sticky; top: 0; z-index: 100; height: 44px;
+    height: 42px; width: 100%; min-width: 1100px;
     display: flex; justify-content: space-between; align-items: center;
     padding: 0 16px; background: #ffffff; border-bottom: 1px solid #dce2e6;
   }
-  .brand-title { font-size: 13px; font-weight: 800; color: #0f172a; }
+  .brand-title { font-size: 13px; font-weight: 800; color: #0f172a; letter-spacing: 0.5px; }
+
   .stats-pill {
-    display: flex; gap: 12px; font-size: 11px; font-weight: 800;
-    background: #f8fafc; padding: 4px 10px; border-radius: 4px; border: 1px solid #e2e8f0;
+    display: flex; gap: 14px; font-size: 11px; font-weight: 800;
+    background: #f8fafc; padding: 4px 12px; border-radius: 4px; border: 1px solid #e2e8f0;
   }
   .bull-txt { color: #059669; }
   .bear-txt { color: #dc2626; }
 
-  /* Full Responsive Workspace Container */
+  /* Main Workspace Container */
   #main-viewport {
-    position: relative; width: 1280px; height: 740px; margin: 0 auto;
-    background: #f3f6f8; overflow: visible;
+    position: relative; width: 1140px; height: 730px; margin: 0 auto;
+    background: #f3f6f8; overflow: hidden;
   }
   #flowCanvas {
-    position: absolute; left: 0; top: 0; width: 1280px; height: 740px;
+    position: absolute; left: 0; top: 0; width: 1140px; height: 730px;
     z-index: 1; pointer-events: none;
   }
 
-  /* Left Sector List */
+  /* 1. Left Sector Column */
   .sector-col {
-    position: absolute; left: 14px; top: 35px; width: 170px; z-index: 3;
-    display: flex; flex-direction: column; gap: 3px;
+    position: absolute; left: 14px; top: 32px; width: 165px; z-index: 3;
+    display: flex; flex-direction: column; gap: 3.2px;
   }
   .sec-row {
     display: flex; justify-content: space-between; align-items: center;
-    background: rgba(255, 255, 255, 0.94); border: 1px solid #cbd5e1; border-radius: 3px;
+    background: rgba(255, 255, 255, 0.95); border: 1px solid #cbd5e1; border-radius: 3px;
     padding: 2px 6px; font-size: 9.5px; font-weight: 600; height: 21px; backdrop-filter: blur(2px);
   }
-  .bar-box { width: 40px; height: 3.5px; background: #e2e8f0; border-radius: 2px; overflow: hidden; margin: 0 4px; }
+  .bar-box { width: 38px; height: 3.5px; background: #e2e8f0; border-radius: 2px; overflow: hidden; margin: 0 4px; }
   .bar-val { height: 100%; border-radius: 2px; }
 
-  /* Right Side: Exact 3-Column Hierarchy from Video */
+  /* 2. Right Side: Exact 3-Column Hierarchy (Budget Stocks Only) */
   #right-panel {
-    position: absolute; left: 750px; top: 30px; width: 515px; z-index: 3;
-    display: flex; flex-direction: column; gap: 12px;
+    position: absolute; left: 690px; top: 25px; width: 440px; z-index: 3;
+    display: flex; flex-direction: column; gap: 10px;
   }
-  .panel-block { display: flex; flex-direction: column; gap: 8px; }
-  .stock-triple-row { display: flex; gap: 8px; align-items: stretch; }
+  .panel-block { display: flex; flex-direction: column; gap: 7px; }
+  .stock-triple-row { display: flex; gap: 6px; align-items: stretch; }
 
-  /* Column 1: Filtered Chips */
-  .col-chips { width: 115px; display: flex; flex-direction: column; gap: 5px; }
+  /* Column 1: Chips */
+  .col-chips { width: 95px; display: flex; flex-direction: column; gap: 4px; }
   .chip-item {
-    background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px;
-    padding: 4px 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); font-size: 9px; cursor: pointer;
+    background: #ffffff; border: 1px solid #cbd5e1; border-radius: 3px;
+    padding: 3px 5px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); font-size: 8.5px; cursor: pointer;
   }
   .chip-item.bull { border-left: 3px solid #059669; }
   .chip-item.bear { border-left: 3px solid #dc2626; }
   .chip-head { display: flex; justify-content: space-between; font-weight: 700; color: #0f172a; }
-  .chip-sub { font-size: 8px; color: #64748b; margin-top: 1px; }
+  .chip-sub { font-size: 7.5px; color: #64748b; margin-top: 1px; }
 
   /* Column 2: Focus Cards */
   .col-mid {
-    width: 125px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px;
-    padding: 5px 7px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); cursor: pointer;
+    width: 105px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px;
+    padding: 4px 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer;
     display: flex; flex-direction: column; justify-content: space-between;
   }
   .col-mid.bull { border-left: 3.5px solid #059669; }
   .col-mid.bear { border-left: 3.5px solid #dc2626; }
-  .mid-name { font-size: 10.5px; font-weight: 800; color: #0f172a; }
-  .mid-pct { font-size: 11px; font-weight: 800; margin: 2px 0; }
+  .mid-name { font-size: 9.5px; font-weight: 800; color: #0f172a; }
+  .mid-pct { font-size: 10px; font-weight: 800; margin: 2px 0; }
   .mid-sub { font-size: 8px; color: #64748b; }
 
-  /* Column 3: Large Cards with Sparkline */
+  /* Column 3: Large Cards with Mini Sparkline */
   .col-master {
     flex: 1; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.08); padding: 6px 8px; cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.07); padding: 5px 8px; cursor: pointer;
   }
   .col-master.bull { border-left: 4.5px solid #059669; }
   .col-master.bear { border-left: 4.5px solid #dc2626; }
   .m-head { display: flex; justify-content: space-between; align-items: center; }
-  .m-name { font-size: 11.5px; font-weight: 800; color: #0f172a; }
-  .m-badge { font-size: 7.5px; font-weight: 800; padding: 1.5px 4px; border-radius: 2px; }
+  .m-name { font-size: 11px; font-weight: 800; color: #0f172a; }
+  .m-badge { font-size: 7px; font-weight: 800; padding: 1.5px 4px; border-radius: 2px; }
   .b-bull { background: #ecfdf5; color: #059669; }
   .b-bear { background: #fef2f2; color: #dc2626; }
 
   .m-mid { display: flex; justify-content: space-between; align-items: center; margin-top: 2px; }
-  .m-price { font-size: 15px; font-weight: 800; }
-  .m-pct { font-size: 9.5px; font-weight: 700; }
-  .spark-cv { width: 110px; height: 28px; }
+  .m-price { font-size: 14px; font-weight: 800; }
+  .m-pct { font-size: 9px; font-weight: 700; }
+  .spark-cv { width: 95px; height: 26px; }
 
   .m-foot {
-    display: flex; justify-content: space-between; margin-top: 4px; padding-top: 2px;
-    border-top: 1px dashed #e2e8f0; font-size: 8px; color: #64748b;
+    display: flex; justify-content: space-between; margin-top: 3px; padding-top: 2px;
+    border-top: 1px dashed #e2e8f0; font-size: 7.5px; color: #64748b;
   }
   .m-foot b { color: #1e293b; }
 
-  /* Modal Popup */
+  /* Actionable Order Block Modal */
   .modal-overlay {
-    display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7);
+    display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75);
     z-index: 999; justify-content: center; align-items: center; backdrop-filter: blur(4px);
   }
   .chart-box {
-    background: #0f172a; color: #f8fafc; border-radius: 10px; box-shadow: 0 20px 45px rgba(0,0,0,0.5);
-    width: 820px; max-width: 95vw; height: 540px; padding: 14px 18px; border: 1px solid #334155;
+    background: #0b0f19; color: #f8fafc; border-radius: 10px; box-shadow: 0 20px 45px rgba(0,0,0,0.6);
+    width: 860px; max-width: 96vw; height: 530px; padding: 14px 18px; border: 1px solid #1e293b;
     display: flex; flex-direction: column;
   }
   .chart-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid #1e293b; }
   .modal-close { font-size: 22px; border: none; background: none; cursor: pointer; color: #94a3b8; font-weight: bold; }
-  #actionCanvas { flex: 1; width: 100%; background: #0b0f19; border-radius: 6px; border: 1px solid #1e293b; }
+  #actionCanvas { flex: 1; width: 100%; background: #070b12; border-radius: 6px; border: 1px solid #1e293b; }
   .strategy-bar {
     display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
-    background: #1e293b; border: 1px solid #334155; border-radius: 6px;
-    padding: 8px 12px; margin-top: 8px; font-size: 10.5px;
+    background: #111827; border: 1px solid #1f2937; border-radius: 6px;
+    padding: 8px 12px; margin-top: 8px; font-size: 10px;
   }
   .st-val { font-size: 12px; font-weight: 800; margin-top: 1px; }
 </style>
@@ -134,60 +136,51 @@
 </div>
 
 <div id="main-viewport">
-  <canvas id="flowCanvas" width="1280" height="740"></canvas>
+  <canvas id="flowCanvas" width="1140" height="730"></canvas>
   <div class="sector-col" id="sectorContainer"></div>
   <div id="right-panel"></div>
 </div>
 
-<!-- Modal Popup -->
+<!-- Click Modal Window -->
 <div class="modal-overlay" id="chartModal">
   <div class="chart-box">
     <div class="chart-head">
       <div>
         <span style="font-size: 16px; font-weight: 800; color:#38bdf8;" id="modalStockName">SUZLON</span>
-        <span style="font-size: 11px; color:#94a3b8; margin-left: 8px;" id="modalStockSec">POWER SECTOR • 5M INTRADAY</span>
+        <span style="font-size: 11px; color:#94a3b8; margin-left: 8px;" id="modalStockSec">POWER SECTOR • 5M INTRADAY ORDER BLOCK</span>
       </div>
       <button class="modal-close" onclick="closeChart()">✕</button>
     </div>
-    <canvas id="actionCanvas" width="780" height="380"></canvas>
+    <canvas id="actionCanvas" width="820" height="380"></canvas>
     <div class="strategy-bar">
       <div><span style="color:#94a3b8; font-size:8.5px;">ORDER BLOCK ZONE</span><div class="st-val" id="stZone" style="color:#10b981;">₹57.00 - ₹57.50</div></div>
-      <div><span style="color:#94a3b8; font-size:8.5px;">BUY ENTRY</span><div class="st-val" id="stBuy" style="color:#38bdf8;">₹57.40 (Pullback)</div></div>
-      <div><span style="color:#94a3b8; font-size:8.5px;">STOP LOSS (MIN LOSS)</span><div class="st-val" id="stSL" style="color:#ef4444;">₹56.10</div></div>
+      <div><span style="color:#94a3b8; font-size:8.5px;">BUY ENTRY (PULLBACK)</span><div class="st-val" id="stBuy" style="color:#38bdf8;">₹57.40</div></div>
+      <div><span style="color:#94a3b8; font-size:8.5px;">STOP LOSS (KAM LOSS)</span><div class="st-val" id="stSL" style="color:#ef4444;">₹56.10</div></div>
       <div><span style="color:#94a3b8; font-size:8.5px;">PROFIT TARGET</span><div class="st-val" id="stTarget" style="color:#22c55e;">₹61.20</div></div>
     </div>
   </div>
 </div>
 
 <script>
-// --- DATA: EXACT SECTORS FROM VIDEO ---
+// --- DATA: SECTORS ---
 var sectors = [
-  { name: "IT", pct: "+2.87%", type: "bull", val: 86 },
-  { name: "LOGISTICS", pct: "+2.41%", type: "bull", val: 80 },
-  { name: "CEMENT", pct: "+2.21%", type: "bull", val: 76 },
-  { name: "FMCG", pct: "+1.97%", type: "bull", val: 70 },
-  { name: "NBFC", pct: "+1.88%", type: "bull", val: 68 },
-  { name: "INSURANCE", pct: "+1.69%", type: "bull", val: 62 },
-  { name: "METAL", pct: "+1.67%", type: "bull", val: 60 },
-  { name: "POWER", pct: "+1.65%", type: "bull", val: 59 },
-  { name: "PSU BANK", pct: "+1.59%", type: "bull", val: 56 },
-  { name: "BANK", pct: "+1.38%", type: "bull", val: 50 },
-  { name: "PHARMA", pct: "+1.34%", type: "bull", val: 48 },
-  { name: "NEW-AGE", pct: "+1.31%", type: "bull", val: 45 },
-  { name: "CHEM", pct: "+1.26%", type: "bull", val: 42 },
-  { name: "TELECOM", pct: "+1.21%", type: "bull", val: 40 },
-  { name: "REALTY", pct: "+1.17%", type: "bull", val: 38 },
-  { name: "DEFENCE", pct: "+1.16%", type: "bull", val: 37 },
-  { name: "AUTO", pct: "+1.15%", type: "bull", val: 36 },
-  { name: "CAP GOODS", pct: "+0.77%", type: "bull", val: 28 },
-  { name: "CONSUMER", pct: "+0.71%", type: "bull", val: 24 },
-  { name: "CAP MKTS", pct: "+0.52%", type: "bull", val: 18 },
-  { name: "OIL & GAS", pct: "+0.01%", type: "bull", val: 8 },
-  { name: "MEDIA", pct: "-0.64%", type: "bear", val: 25 },
-  { name: "ENERGY", pct: "-1.12%", type: "bear", val: 40 }
+  { name: "POWER", pct: "+3.45%", type: "bull", val: 88 },
+  { name: "NEW-AGE", pct: "+2.95%", type: "bull", val: 82 },
+  { name: "DEFENCE", pct: "+2.65%", type: "bull", val: 78 },
+  { name: "METAL", pct: "+2.40%", type: "bull", val: 75 },
+  { name: "PSU BANK", pct: "+2.10%", type: "bull", val: 70 },
+  { name: "IT", pct: "+1.85%", type: "bull", val: 65 },
+  { name: "PHARMA", pct: "+1.45%", type: "bull", val: 58 },
+  { name: "CEMENT", pct: "+1.20%", type: "bull", val: 52 },
+  { name: "INFRA", pct: "+0.95%", type: "bull", val: 46 },
+  { name: "FMCG", pct: "+0.65%", type: "bull", val: 38 },
+  { name: "FINANCE", pct: "+0.40%", type: "bull", val: 32 },
+  { name: "BANK", pct: "-0.85%", type: "bear", val: 35 },
+  { name: "AUTO", pct: "-2.40%", type: "bear", val: 65 },
+  { name: "TELECOM", pct: "-3.80%", type: "bear", val: 80 }
 ];
 
-// High Volume Active Stocks (Affordable + Video Match)
+// --- 100% BUDGET / SASTE STOCKS POOL (₹8 to ₹260 RANGE ONLY) ---
 var bullGroups = [
   {
     chip1: { name: "NHPC", price: "89.20", pct: "+2.10%", sup: "86.50", zone: "88.00-88.50", res: "93.00", type: "bull" },
@@ -196,16 +189,16 @@ var bullGroups = [
     master: { name: "SUZLON", sec: "POWER", price: "58.40", pct: "+4.85%", sup: "56.10", zone: "57.00-57.50", res: "61.20", type: "bull" }
   },
   {
-    chip1: { name: "FEDERALBNK", price: "192.50", pct: "+1.85%", sup: "188.00", zone: "190.00-191.00", res: "198.00", type: "bull" },
-    chip2: { name: "IREDA", price: "215.30", pct: "+5.20%", sup: "208.00", zone: "211.00-213.00", res: "226.00", type: "bull" },
-    mid: { name: "BEL", sec: "DEFENCE", price: "298.50", pct: "+3.15%", sup: "291.00", zone: "294.00-296.00", res: "308.00", type: "bull" },
+    chip1: { name: "IOC", price: "142.10", pct: "+1.65%", sup: "138.50", zone: "140.00-141.00", res: "146.00", type: "bull" },
+    chip2: { name: "SAIL", price: "128.50", pct: "+2.15%", sup: "124.00", zone: "126.00-127.20", res: "133.00", type: "bull" },
+    mid: { name: "IREDA", sec: "FINANCE", price: "215.30", pct: "+5.20%", sup: "208.00", zone: "211.00-213.00", res: "226.00", type: "bull" },
     master: { name: "ZOMATO", sec: "NEW-AGE", price: "262.10", pct: "+3.65%", sup: "255.00", zone: "258.00-260.00", res: "270.00", type: "bull" }
   },
   {
-    chip1: { name: "IOC", price: "142.10", pct: "+1.65%", sup: "138.50", zone: "140.00-141.00", res: "146.00", type: "bull" },
-    chip2: { name: "SAIL", price: "128.50", pct: "+2.15%", sup: "124.00", zone: "126.00-127.20", res: "133.00", type: "bull" },
+    chip1: { name: "FEDERALBNK", price: "192.50", pct: "+1.85%", sup: "188.00", zone: "190.00-191.00", res: "198.00", type: "bull" },
+    chip2: { name: "IDFCFIRSTB", price: "72.40", pct: "+1.95%", sup: "70.10", zone: "71.20-71.80", res: "75.00", type: "bull" },
     mid: { name: "BHEL", sec: "POWER", price: "245.80", pct: "+2.70%", sup: "238.00", zone: "241.00-243.00", res: "254.00", type: "bull" },
-    master: { name: "TATAPOWER", sec: "POWER", price: "392.00", pct: "+3.10%", sup: "385.00", zone: "388.00-390.00", res: "402.00", type: "bull" }
+    master: { name: "BEL", sec: "DEFENCE", price: "298.50", pct: "+3.15%", sup: "291.00", zone: "294.00-296.00", res: "308.00", type: "bull" }
   }
 ];
 
@@ -213,18 +206,18 @@ var bearGroups = [
   {
     chip1: { name: "YESBANK", price: "19.85", pct: "-4.80%", sup: "18.50", zone: "20.20-20.50", res: "21.00", type: "bear" },
     chip2: { name: "RPOWER", price: "34.20", pct: "-4.95%", sup: "32.00", zone: "35.00-35.50", res: "36.20", type: "bear" },
-    mid: { name: "IDEA", sec: "TELECOM", price: "8.65", pct: "-5.45%", sup: "8.10", zone: "8.80-9.00", res: "9.20", type: "bear" },
-    master: { name: "HEROMOTOCO", sec: "AUTO", price: "4,210.00", pct: "-4.90%", sup: "4,150.00", zone: "4,250-4,280", res: "4,320.00", type: "bear" }
+    mid: { name: "GTLINFRA", sec: "TELECOM", price: "2.10", pct: "-4.55%", sup: "1.90", zone: "2.20-2.30", res: "2.40", type: "bear" },
+    master: { name: "IDEA", sec: "TELECOM", price: "8.65", pct: "-5.45%", sup: "8.10", zone: "8.80-9.00", res: "9.20", type: "bear" }
   },
   {
-    chip1: { name: "GTLINFRA", price: "2.10", pct: "-4.55%", sup: "1.90", zone: "2.20-2.30", res: "2.40", type: "bear" },
-    chip2: { name: "UCOBANK", price: "44.20", pct: "-3.10%", sup: "42.00", zone: "45.00-45.50", res: "46.50", type: "bear" },
-    mid: { name: "IRFC", sec: "FINANCE", price: "138.40", pct: "-2.65%", sup: "134.00", zone: "140.00-141.50", res: "144.00", type: "bear" },
-    master: { name: "TATAMOTORS", sec: "AUTO", price: "812.00", pct: "-2.85%", sup: "798.00", zone: "820-825", res: "835.00", type: "bear" }
+    chip1: { name: "UCOBANK", price: "44.20", pct: "-3.10%", sup: "42.00", zone: "45.00-45.50", res: "46.50", type: "bear" },
+    chip2: { name: "IOB", price: "52.80", pct: "-2.80%", sup: "50.50", zone: "53.50-54.20", res: "56.00", type: "bear" },
+    mid: { name: "CENTRALBK", sec: "BANK", price: "56.10", pct: "-2.40%", sup: "54.00", zone: "57.00-57.80", res: "59.50", type: "bear" },
+    master: { name: "IRFC", sec: "FINANCE", price: "138.40", pct: "-2.65%", sup: "134.00", zone: "140.00-141.50", res: "144.00", type: "bear" }
   }
 ];
 
-// Build Left Sectors
+// 1. Build Left Sectors
 var sectorStartYs = [];
 var secContainer = document.getElementById("sectorContainer");
 for (var i = 0; i < sectors.length; i++) {
@@ -236,10 +229,10 @@ for (var i = 0; i < sectors.length; i++) {
                   '<div class="bar-box"><div class="bar-val" style="width:' + s.val + '%; background:' + color + ';"></div></div>' +
                   '<span style="color:' + color + ';">' + s.pct + '</span>';
   secContainer.appendChild(div);
-  sectorStartYs.push({ y: 35 + i * 24 + 10, type: s.type });
+  sectorStartYs.push({ y: 32 + i * 24.2 + 10, type: s.type });
 }
 
-// Build Right Panel (3 Columns)
+// 2. Build Right Multi-Tier Grid
 var rightPanel = document.getElementById("right-panel");
 
 function buildSection(groups, isBull) {
@@ -251,7 +244,7 @@ function buildSection(groups, isBull) {
     var row = document.createElement("div");
     row.className = "stock-triple-row";
 
-    // 1. Column 1: Chips
+    // Column 1: Chips
     var col1 = document.createElement("div");
     col1.className = "col-chips";
 
@@ -269,7 +262,7 @@ function buildSection(groups, isBull) {
 
     row.appendChild(col1);
 
-    // 2. Column 2: Focus
+    // Column 2: Focus
     var col2 = document.createElement("div");
     col2.className = "col-mid " + (isBull ? 'bull' : 'bear');
     col2.innerHTML = '<div><div class="mid-name">' + g.mid.name + '</div><div class="mid-sub">' + g.mid.sec + '</div></div>' +
@@ -278,7 +271,7 @@ function buildSection(groups, isBull) {
     (function(item) { col2.onclick = function() { openDrawnChart(item); }; })(g.mid);
     row.appendChild(col2);
 
-    // 3. Column 3: Master Card with Sparkline
+    // Column 3: Master Card with Sparkline
     var col3 = document.createElement("div");
     col3.className = "col-master " + (isBull ? 'bull' : 'bear');
     (function(item) { col3.onclick = function() { openDrawnChart(item); }; })(g.master);
@@ -291,7 +284,7 @@ function buildSection(groups, isBull) {
       '</div>' +
       '<div class="m-mid">' +
         '<div><div class="m-price" style="color:' + (isBull ? '#059669' : '#dc2626') + ';">₹' + g.master.price + '</div><div class="m-pct" style="color:' + (isBull ? '#059669' : '#dc2626') + ';">' + g.master.pct + '</div></div>' +
-        '<canvas id="' + sparkId + '" class="spark-cv" width="110" height="28"></canvas>' +
+        '<canvas id="' + sparkId + '" class="spark-cv" width="95" height="26"></canvas>' +
       '</div>' +
       '<div class="m-foot">' +
         '<span>SUP: <b>' + g.master.sup + '</b></span>' +
@@ -320,7 +313,7 @@ function drawSpark(id, isBull) {
   var w = cv.width, h = cv.height;
 
   var pts = [];
-  var cur = isBull ? 22 : 6;
+  var cur = isBull ? 20 : 6;
   for (var k = 0; k < 15; k++) {
     cur += isBull ? (Math.random() * 3.5 - 2.5) : (Math.random() * 3.5 - 1.0);
     cur = Math.max(2, Math.min(h - 2, cur));
@@ -345,10 +338,10 @@ function drawSpark(id, isBull) {
 var canvas = document.getElementById("flowCanvas");
 var ctx = canvas.getContext("2d");
 
-var ladderX = 570;
-var boxWidth = 140;
-var boxRight = ladderX + boxWidth; // 710px
-var targetGridX = 750;
+var ladderX = 520;
+var boxWidth = 135;
+var boxRight = ladderX + boxWidth; // 655px
+var targetGridX = 690;
 
 var inTracks = [];
 var outTracks = [];
@@ -360,12 +353,12 @@ for (var i = 0; i < sectorStartYs.length; i++) {
   for (var k = 0; k < count; k++) {
     var targetY = sec.type === "bull"
       ? (32 + Math.pow(Math.random(), 1.6) * 320)
-      : (510 + Math.random() * 140);
+      : (500 + Math.random() * 140);
 
     inTracks.push({
-      p0: [185, sec.y],
-      p1: [280 + Math.random() * 50, sec.y + (targetY - sec.y) * 0.1],
-      p2: [440 + Math.random() * 60, targetY + 10],
+      p0: [180, sec.y],
+      p1: [270 + Math.random() * 50, sec.y + (targetY - sec.y) * 0.1],
+      p2: [410 + Math.random() * 50, targetY + 10],
       p3: [ladderX, targetY],
       type: sec.type,
       width: Math.random() * 0.5 + 0.45
@@ -376,13 +369,13 @@ for (var i = 0; i < sectorStartYs.length; i++) {
 // Clean Connecting Outflow Lines into Right Panel
 for (var k = 0; k < 22; k++) {
   var isBull = k < 14;
-  var srcY = isBull ? (35 + Math.random() * 310) : (515 + Math.random() * 135);
-  var destY = isBull ? (35 + Math.random() * 320) : (510 + Math.random() * 160);
+  var srcY = isBull ? (35 + Math.random() * 310) : (505 + Math.random() * 135);
+  var destY = isBull ? (35 + Math.random() * 310) : (500 + Math.random() * 150);
 
   outTracks.push({
     p0: [boxRight, srcY],
-    p1: [boxRight + 20, srcY],
-    p2: [targetGridX - 20, destY],
+    p1: [boxRight + 15, srcY],
+    p2: [targetGridX - 15, destY],
     p3: [targetGridX, destY],
     type: isBull ? "bull" : "bear",
     width: 0.8
@@ -412,7 +405,7 @@ function getPoint(p0, p1, p2, p3, t) {
 var topDots = [];
 for (var i = 0; i < 80; i++) {
   topDots.push({
-    x: 340 + Math.random() * 260,
+    x: 320 + Math.random() * 240,
     y: 16 + (Math.random() * 12 - 6),
     type: Math.random() > 0.22 ? "bull" : "bear"
   });
@@ -423,7 +416,7 @@ function render() {
 
   // Top Breadth Meter
   ctx.fillStyle = "rgba(203, 213, 225, 0.45)";
-  ctx.fillRect(320, 16, 290, 2);
+  ctx.fillRect(300, 16, 270, 2);
   for (var i = 0; i < topDots.length; i++) {
     var d = topDots[i];
     ctx.beginPath();
@@ -433,10 +426,10 @@ function render() {
   }
 
   // Horizontal Reference Guidelines
-  var levels = [110, 240, 420, 580];
+  var levels = [110, 240, 420, 560];
   for (var i = 0; i < levels.length; i++) {
     ctx.beginPath();
-    ctx.moveTo(185, levels[i]);
+    ctx.moveTo(180, levels[i]);
     ctx.lineTo(ladderX + boxWidth, levels[i]);
     ctx.strokeStyle = "rgba(59, 130, 246, 0.35)";
     ctx.lineWidth = 1;
@@ -507,7 +500,7 @@ function render() {
   for (var i = 0; i < 94; i++) {
     var isBull = i < 66;
     var y = 26 + i * 7.4;
-    var tickLen = 55 + Math.sin(i * 1.5) * 45;
+    var tickLen = 50 + Math.sin(i * 1.5) * 40;
     ctx.beginPath();
     ctx.moveTo(ladderX, y);
     ctx.lineTo(ladderX + tickLen, y);
@@ -537,8 +530,8 @@ function render() {
   ctx.strokeStyle = "#dc2626";
   ctx.lineWidth = 1.8;
   ctx.fillStyle = "rgba(220, 38, 38, 0.08)";
-  ctx.fillRect(ladderX, 510, boxWidth, 160);
-  ctx.strokeRect(ladderX, 510, boxWidth, 160);
+  ctx.fillRect(ladderX, 500, boxWidth, 160);
+  ctx.strokeRect(ladderX, 500, boxWidth, 160);
 
   requestAnimationFrame(render);
 }
